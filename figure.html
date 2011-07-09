@@ -1,0 +1,161 @@
+<html>
+<head>
+	<script type="text/javascript" src="/static/d3/d3.js"></script>
+	<script type="text/javascript" src="/static/jquery.js"></script>
+	<style>
+	body{
+	    padding:0em;
+	    text-align:center;
+	}
+	path {
+		stroke: crimson;
+		stroke-width: 1;
+		fill: none;
+	}
+	line {
+		stroke: black;
+	}
+	text {
+		font-family: Arial;
+		font-size: 9pt;
+	}
+	</style>
+</head>
+<body>
+<script type='text/javascript'>	
+	
+	var h = 200,
+		w = 800,
+		margin = 60;
+	
+	var chart = d3.select("body")
+		.append("svg:svg")
+			.attr("width", w)
+			.attr("height", h);
+	
+	var g = chart.append("svg:g");
+	
+	
+	function draw(data, labels){
+		
+		var y_scale = d3.scale.linear()
+		        .domain([1, 0])
+		        .range([0 + margin, h-margin]),
+			x_scale = d3.scale.linear()
+			    .domain([0, data.length])
+			    .range([0 + margin, w-margin]);
+		
+		var line = d3.svg.line()
+			.x(function(d) { return x_scale(d.x); })
+			.y(function(d) { return y_scale(d.y); });
+		
+		/* line */
+		
+		g.append("svg:path").attr("d", line(data));
+		
+		/* axes */
+		
+		g.append("svg:line")
+			.attr("x1", x_scale(0))
+			.attr("y1", y_scale(0))
+			.attr("x2", x_scale(w))
+			.attr("y2", y_scale(0))
+
+		g.append("svg:line")
+			.attr("x1", x_scale(0))
+			.attr("y1", y_scale(0))
+			.attr("x2", x_scale(0))
+			.attr("y2", y_scale(1))
+		
+		/* ticks */
+		
+		var tickLength = 8;
+		
+		g.selectAll(".xTicks")
+			.data(x_scale.ticks(5))
+			.enter().append("svg:line")
+				.attr("class", "xTicks")
+				.attr("x1", function(d) { return x_scale(d); })
+				.attr("y1", y_scale(0))
+				.attr("x2", function(d) { return x_scale(d); })
+				.attr("y2", y_scale(0)+tickLength)
+
+		g.selectAll(".yTicks")
+			.data(y_scale.ticks(5))
+			.enter().append("svg:line")
+			.attr("class", "yTicks")
+			.attr("x1", x_scale(0)-tickLength)
+			.attr("x2", x_scale(0))
+			.attr("y1", function(d) { return y_scale(d); })
+			.attr("y2", function(d) { return y_scale(d); })
+		
+		/* tick labels */
+		
+		g.selectAll(".xTickLabel")
+			.data(x_scale.ticks(5))
+			.enter().append("svg:text")
+				.attr("class", "xLabel")
+				.text(function(d, i) { return d; })
+				.attr("x", function(d) { return x_scale(d); })
+				.attr("y", y_scale(0)+20)
+				.attr("text-anchor", "middle")
+
+		g.selectAll(".yTickLabel")
+			.data(y_scale.ticks(5))
+			.enter().append("svg:text")
+				.attr("class", "yLabel")
+				.text(function(d, i) { return Math.round(d*10)/10; })
+				.attr("x", x_scale(0)-tickLength-20)
+				.attr("y", function(d) { return y_scale(d) })
+				.attr("text-anchor", "right")
+				.attr("dy", 4)
+		
+		/* axis labels */
+		g.append("svg:text")
+		    .text(labels.x)
+		    .attr("x", x_scale(data.length / 2))
+		    .attr("y", y_scale(0)+40)
+		
+		g.append("svg:text")
+		    .text(labels.y)
+		    .attr("y", x_scale(0)-margin)
+		    .attr("y", y_scale.range()[0] + 0.5 * (y_scale.range()[1] - y_scale.range()[0]))	
+	}
+	
+	$.ajax({
+        url: "http://localhost:7666/data",
+        success: function(response){
+            var values = response.data.values;
+            var labels = response.data.labels;
+            draw(values, labels)
+        },
+        dataType: "json"
+    });
+    
+    function refresh(values, labels){
+        $.ajax({
+            url: "http://localhost:7666/data",
+            success: function(response){
+                var values = response.data.values;
+                var labels = response.data.labels;
+                var y_scale = d3.scale.linear()
+    		        .domain([1, 0])
+    		        .range([0 + margin, h-margin]),
+    			x_scale = d3.scale.linear()
+    			    .domain([0, values.length])
+    			    .range([0 + margin, w-margin]);
+		
+    		    var line = d3.svg.line()
+        			.x(function(d) { return x_scale(d.x); })
+        			.y(function(d) { return y_scale(d.y); });
+                chart.selectAll("path").attr("d", line(values));
+            },
+            dataType: "json"
+        });
+    }
+    
+    var t = setInterval(refresh, 1000);
+    
+    
+</script>
+</body>
