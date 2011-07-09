@@ -1,0 +1,3 @@
+You need to run server.py first, which will start up a tornado server. Then import figure.py and use figure.plot(x,y,xlabel,ylabel) to plot! 
+
+This is just a proof of concept - there's much more to do!
