@@ -13,10 +13,10 @@
 		fill: none;
 	}
 	line {
-		stroke: black;
+		stroke: LightSteelBlue;
 	}
 	text {
-		font-family: Arial;
+		font-family: Georgia;
 		font-size: 9pt;
 	}
 	</style>
@@ -122,10 +122,10 @@
             
             d3.select(this).transition()
                 .attr("r",10)
-                .style("fill","blue")
+                .style("fill","LightSteelBlue")
                 .attr("stroke","black")
                 .attr("stroke-width",1)
-                .style("fill-opacity",0.1)
+                .style("fill-opacity",0.8)
                     
         }
         function shrink(d,i){
@@ -155,9 +155,9 @@
 		/* horizontal axis */
 		g.append("svg:line")
 			.attr("x1", x_scale(xMin))
-			.attr("y1", y_scale(0))
+			.attr("y1", y_scale(yMin))
 			.attr("x2", x_scale(xMax))
-			.attr("y2", y_scale(0))
+			.attr("y2", y_scale(yMin))
             
         /* vertical axis */
 		g.append("svg:line")
@@ -175,9 +175,9 @@
 			.enter().append("svg:line")
 				.attr("class", "xTicks")
 				.attr("x1", function(d) { return x_scale(d); })
-				.attr("y1", y_scale(0))
+				.attr("y1", y_scale(yMin))
 				.attr("x2", function(d) { return x_scale(d); })
-				.attr("y2", y_scale(0)+tickLength)
+				.attr("y2", y_scale(yMin)+tickLength)
 
 		g.selectAll(".yTicks")
 			.data(y_scale.ticks(5))
@@ -196,7 +196,7 @@
 				.attr("class", "xLabel")
 				.text(function(d, i) { return d; })
 				.attr("x", function(d) { return x_scale(d); })
-				.attr("y", y_scale(0)+20)
+				.attr("y", y_scale(yMin)+20)
 				.attr("text-anchor", "middle")
 
 		g.selectAll(".yTickLabel")
@@ -212,8 +212,8 @@
 		/* axis labels */
 		g.append("svg:text")
 		    .text(labels.x)
-		    .attr("x", x_scale())
-		    .attr("y", y_scale(0)+40)
+		    .attr("x", x_scale(xMax/2))
+		    .attr("y", y_scale(yMin)+40)
 		
 		g.append("svg:text")
 		    .text(labels.y)
