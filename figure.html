@@ -22,7 +22,26 @@
 	</style>
 </head>
 <body>
-<script type='text/javascript'>	
+<script type='text/javascript'>
+
+    /*
+    
+    This script has three main bits. The first bit is actually all the way at
+    the bottom, which is the ajax call. This is a hangover from protovis; I
+    believe that D3 has a much more elegant way of dealing with JSON. 
+    
+    The ajax call asks our server for the data, unpacks it a little and calls 
+    draw(). 
+    
+    The draw() function draws the axes and ticks and whatnot, and makes a call
+    to draw_line() which draws the series.
+    
+    The third part is the code immediately below here which does the initial 
+    setting up of the SVG canvas and making a group that we can hang bits off've.
+    The `g` variable is appended to throughout the script, which is super
+    helpful.  
+    
+    */
 	
 	var h = 200,
 		w = 800,
@@ -35,12 +54,32 @@
 	
 	var g = chart.append("svg:g");
 	
-	function get_scales(data, w, h, margin){
+	function get_range(data){
+	    
+	    /* 
+	    returns the max and min of the data in both x and y domains.
+	    
+	    Note d3's funky max() function, which allows you to pass in an 
+	    accessor function just like map()
+	    */
+	    
 	    var xMax = d3.max(data, function(d){return d.x;}),
 		    xMin = d3.min(data, function(d){return d.x;}),
 		    yMax = d3.max(data, function(d){return d.y;}),
 		    yMin = d3.min(data, function(d){return d.y;});
 		
+		return [xMin, xMax, yMin, yMax]
+	}
+	
+	function get_scales(data, w, h, margin, xMin, xMax, yMin, yMax){
+	    
+	    /* builds the D3 scales 
+	    
+	    Note how the y scale is upside-down! This allows to never have to
+	    remeber to multiply everything by a terrible -1 all the time: the origin
+	    of the SVG canvas is the top-left.
+	    */
+	    
 		var y_scale = d3.scale.linear()
 		        .domain([yMax, yMin])
 		        .range([0 + margin, h-margin]),
@@ -53,6 +92,11 @@
 	}
 	
 	function draw_line(data,x_scale,y_scale){
+	    
+	    /* 
+	        attaches a line plot to `g` 
+	        dig teh pretty
+	    */
 	    
 	    var line = d3.svg.line()
 			.x(function(d) { return x_scale(d.x); })
@@ -94,24 +138,33 @@
 	}
 	
 	function draw(data, labels){
+	    
+	    /* draws axes, and calls the line drawing function */
 		
-		var scales = get_scales(data, w, h, margin),
+		var ranges = get_range(data),
+		    xMin = ranges[0], 
+		    xMax = ranges[1], 
+		    yMin = ranges[2], 
+		    yMax = ranges[3],
+		    scales = get_scales(data, w, h, margin,xMin,xMax,yMin,yMax),
 		    x_scale = scales[0],
 		    y_scale = scales[1];
 		
 		/* axes */
 		
+		/* horizontal axis */
 		g.append("svg:line")
-			.attr("x1", x_scale(0))
+			.attr("x1", x_scale(xMin))
 			.attr("y1", y_scale(0))
-			.attr("x2", x_scale(w))
+			.attr("x2", x_scale(xMax))
 			.attr("y2", y_scale(0))
-
+            
+        /* vertical axis */
 		g.append("svg:line")
-			.attr("x1", x_scale(0))
-			.attr("y1", y_scale(0))
-			.attr("x2", x_scale(0))
-			.attr("y2", y_scale(1))
+			.attr("x1", x_scale(xMin))
+			.attr("y1", y_scale(yMin))
+			.attr("x2", x_scale(xMin))
+			.attr("y2", y_scale(yMax))
 		
 		/* ticks */
 		
@@ -150,7 +203,7 @@
 			.data(y_scale.ticks(5))
 			.enter().append("svg:text")
 				.attr("class", "yLabel")
-				.text(function(d, i) { return Math.round(d*10)/10; })
+				.text(function(d, i) { return d3.round(d,2); })
 				.attr("x", x_scale(0)-tickLength-20)
 				.attr("y", function(d) { return y_scale(d) })
 				.attr("text-anchor", "right")
@@ -159,7 +212,7 @@
 		/* axis labels */
 		g.append("svg:text")
 		    .text(labels.x)
-		    .attr("x", x_scale(data.length / 2))
+		    .attr("x", x_scale())
 		    .attr("y", y_scale(0)+40)
 		
 		g.append("svg:text")
@@ -170,6 +223,13 @@
 		/* draw the line */
 		draw_line(data,x_scale,y_scale)
 	}
+	
+	/* 
+	this ajax call is where it all starts. It gets the data from the server
+	via an API call to /data which just returns the json stored in static/temp.json
+	On succcess, it splits up the response into values (the x and y data) and 
+	labels, which are for the axis labels. 
+	*/
 	
 	$.ajax({
         url: "http://localhost:7666/data",
