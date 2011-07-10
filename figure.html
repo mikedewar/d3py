@@ -53,6 +53,36 @@
 		
 		g.append("svg:path").attr("d", line(data));
 		
+		g.selectAll(".circle")
+		    .data(data)
+		    .enter().append("svg:circle")
+		        .attr("cx", function(d){ return x_scale(d.x); })
+		        .attr("cy", function(d){ return y_scale(d.y); })
+		        .attr("r", 4)
+                .style("fill", "crimson" )
+                .style("fill-opacity", .5)
+                .on("mouseover", grow)
+                .on("mouseout", shrink)
+                .attr("title", function(d){return d.y; });
+        
+        function grow(d, i){
+            
+            d3.select(this).transition()
+                .attr("r",10)
+                .style("fill","blue")
+                .attr("stroke","black")
+                .attr("stroke-width",1)
+                .style("fill-opacity",0.1)
+                    
+        }
+        function shrink(d,i){
+            d3.select(this).transition()
+                .attr("r",4)
+                .style("fill","red")
+                .attr("stroke-width",0)
+                .style("fill-opacity",0.5)
+        }
+		
 		/* axes */
 		
 		g.append("svg:line")
