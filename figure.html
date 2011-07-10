@@ -183,8 +183,8 @@
 			.data(y_scale.ticks(5))
 			.enter().append("svg:line")
 			.attr("class", "yTicks")
-			.attr("x1", x_scale(0)-tickLength)
-			.attr("x2", x_scale(0))
+			.attr("x1", x_scale(xMin)-tickLength)
+			.attr("x2", x_scale(xMin))
 			.attr("y1", function(d) { return y_scale(d); })
 			.attr("y2", function(d) { return y_scale(d); })
 		
@@ -204,7 +204,7 @@
 			.enter().append("svg:text")
 				.attr("class", "yLabel")
 				.text(function(d, i) { return d3.round(d,2); })
-				.attr("x", x_scale(0)-tickLength-20)
+				.attr("x", x_scale(xMin)-tickLength-20)
 				.attr("y", function(d) { return y_scale(d) })
 				.attr("text-anchor", "right")
 				.attr("dy", 4)
@@ -212,13 +212,13 @@
 		/* axis labels */
 		g.append("svg:text")
 		    .text(labels.x)
-		    .attr("x", x_scale(xMax/2))
+		    .attr("x", x_scale(xMin + ((xMax-xMin)/2)))
 		    .attr("y", y_scale(yMin)+40)
 		
 		g.append("svg:text")
 		    .text(labels.y)
 		    .attr("y", x_scale(0)-margin)
-		    .attr("y", y_scale.range()[0] + 0.5 * (y_scale.range()[1] - y_scale.range()[0]))
+		    .attr("y", y_scale(yMin + ((yMax-yMin)/2)))
 		    
 		/* draw the line */
 		draw_line(data,x_scale,y_scale)
