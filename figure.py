@@ -25,8 +25,8 @@ def plot(x, y, xlabel="x", ylabel="y", refresh="new"):
 if __name__ == "__main__":
     import numpy as np
     
-    T = 10*np.pi
-    x = np.linspace(0,T,100)
+    T = 5*np.pi
+    x = np.linspace(-T,T,100)
     a = 0.05
     y = np.exp(-a*x) * np.sin(x)
     plot(x, y, xlabel="time", ylabel="value", refresh="manual")
