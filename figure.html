@@ -35,17 +35,26 @@
 	
 	var g = chart.append("svg:g");
 	
-	
-	function draw(data, labels){
+	function get_scales(data, w, h, margin){
+	    var xMax = d3.max(data, function(d){return d.x;}),
+		    xMin = d3.min(data, function(d){return d.x;}),
+		    yMax = d3.max(data, function(d){return d.y;}),
+		    yMin = d3.min(data, function(d){return d.y;});
 		
 		var y_scale = d3.scale.linear()
-		        .domain([1, 0])
+		        .domain([yMax, yMin])
 		        .range([0 + margin, h-margin]),
 			x_scale = d3.scale.linear()
-			    .domain([0, data.length])
+			    .domain([xMin, xMax])
 			    .range([0 + margin, w-margin]);
 		
-		var line = d3.svg.line()
+		return [x_scale, y_scale]
+		
+	}
+	
+	function draw_line(data,x_scale,y_scale){
+	    
+	    var line = d3.svg.line()
 			.x(function(d) { return x_scale(d.x); })
 			.y(function(d) { return y_scale(d.y); });
 		
@@ -82,6 +91,13 @@
                 .attr("stroke-width",0)
                 .style("fill-opacity",0.5)
         }
+	}
+	
+	function draw(data, labels){
+		
+		var scales = get_scales(data, w, h, margin),
+		    x_scale = scales[0],
+		    y_scale = scales[1];
 		
 		/* axes */
 		
@@ -149,42 +165,19 @@
 		g.append("svg:text")
 		    .text(labels.y)
 		    .attr("y", x_scale(0)-margin)
-		    .attr("y", y_scale.range()[0] + 0.5 * (y_scale.range()[1] - y_scale.range()[0]))	
+		    .attr("y", y_scale.range()[0] + 0.5 * (y_scale.range()[1] - y_scale.range()[0]))
+		    
+		/* draw the line */
+		draw_line(data,x_scale,y_scale)
 	}
 	
 	$.ajax({
         url: "http://localhost:7666/data",
         success: function(response){
-            var values = response.data.values;
-            var labels = response.data.labels;
-            draw(values, labels)
+            draw(response.data.values, response.data.labels)
         },
         dataType: "json"
     });
-    
-    function refresh(values, labels){
-        $.ajax({
-            url: "http://localhost:7666/data",
-            success: function(response){
-                var values = response.data.values;
-                var labels = response.data.labels;
-                var y_scale = d3.scale.linear()
-    		        .domain([1, 0])
-    		        .range([0 + margin, h-margin]),
-    			x_scale = d3.scale.linear()
-    			    .domain([0, values.length])
-    			    .range([0 + margin, w-margin]);
-		
-    		    var line = d3.svg.line()
-        			.x(function(d) { return x_scale(d.x); })
-        			.y(function(d) { return y_scale(d.y); });
-                chart.selectAll("path").attr("d", line(values));
-            },
-            dataType: "json"
-        });
-    }
-    
-    var t = setInterval(refresh, 1000);
     
     
 </script>
