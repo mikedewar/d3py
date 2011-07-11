@@ -116,24 +116,34 @@
                 .style("fill-opacity", .5)
                 .on("mouseover", grow)
                 .on("mouseout", shrink)
-                .attr("title", function(d){return d.y; });
+                .attr("title", function(d){return d.y; })
         
         function grow(d, i){
             
             d3.select(this).transition()
                 .attr("r",10)
-                .style("fill","LightSteelBlue")
-                .attr("stroke","black")
-                .attr("stroke-width",1)
-                .style("fill-opacity",0.8)
-                    
+                .style("fill","steelblue")
+                .style("fill-opacity",0.2);
+            
+            g.append("svg:text")
+                .attr("id","label")
+                .text(d3.round(d.y,3))
+                .attr("x", x_scale(d.x)+10)
+                .attr("y", y_scale(d.y)-10)
+                .style("font-size", 10)
+            
+
         }
+        
         function shrink(d,i){
             d3.select(this).transition()
                 .attr("r",4)
                 .style("fill","red")
                 .attr("stroke-width",0)
                 .style("fill-opacity",0.5)
+                        
+            g.selectAll("#label").transition()
+                .style('font-size',0)
         }
 	}
 	
