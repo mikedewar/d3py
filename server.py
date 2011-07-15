@@ -28,14 +28,14 @@ class BaseHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('base.html')
 
-class BarHandler(tornado.web.RequestHandler):
+class LineHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render('figure.html')
+        self.render('line.html')
 
 application = tornado.web.Application(
     [
         (r"/ping$", PingHandler),
-        (r"/bar$", BarHandler),
+        (r"/line$", LineHandler),
         (r"/data$", DataHandler),
         (r"/base$", BaseHandler)
     ],

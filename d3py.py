@@ -2,7 +2,7 @@ import webbrowser
 import json
 
 
-def plot(x, y, xlabel="x", ylabel="y", refresh="new"):
+def line(x, y, xlabel="x", ylabel="y", refresh="new"):
     
     data = {
         "values":[{"x":xi, "y":yi} for xi, yi in zip(x, y)],
@@ -24,10 +24,11 @@ def plot(x, y, xlabel="x", ylabel="y", refresh="new"):
 
 if __name__ == "__main__":
     import numpy as np
+    import d3py
     
     T = 5*np.pi
     x = np.linspace(-T,T,100)
     a = 0.05
     y = np.exp(-a*x) * np.sin(x)
-    plot(x, y, xlabel="time", ylabel="value", refresh="manual")
+    d3py.line(x, y, xlabel="time", ylabel="value")
     
