@@ -1,0 +1,16 @@
+body{
+    padding:0em;
+    text-align:center;
+}
+line {
+    stroke: LightSteelBlue;
+    stroke-width: 1;
+}
+text {
+    font-family: Georgia;
+    font-size: 9pt;
+}
+rect {
+    fill-opacity:0.8;
+    fill: crimson;
+}

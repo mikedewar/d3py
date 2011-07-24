@@ -24,20 +24,25 @@ class PingHandler(tornado.web.RequestHandler):
     def get(self):
         self.finish('ping!')
 
-class BaseHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.render('base.html')
-
 class LineHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('line.html')
+
+class BarHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render('bar.html')
+
+class HistogramHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render('histogram.html')
 
 application = tornado.web.Application(
     [
         (r"/ping$", PingHandler),
         (r"/line$", LineHandler),
+        (r"/bar$", BarHandler),
+        (r"/histogram$", HistogramHandler),
         (r"/data$", DataHandler),
-        (r"/base$", BaseHandler)
     ],
     static_path=os.path.join(os.path.dirname(__file__), "static"),
     debug=True
