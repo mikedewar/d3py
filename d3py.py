@@ -1,6 +1,10 @@
+import os
 import webbrowser
 import json
 import numpy as np
+
+path_to_this_file = os.path.abspath( __file__ )
+temp_json = os.path.join(os.path.dirname(path_to_this_file), "static/temp.json")
 
 def line(x, y, xlabel="x", ylabel="y", refresh="new"):
     
@@ -11,8 +15,7 @@ def line(x, y, xlabel="x", ylabel="y", refresh="new"):
             "y": ylabel
         }
     }
-    
-    fh = open("static/temp.json",'w')
+    fh = open(temp_json,'w')
     json.dump(data,fh)
     
     if refresh == "new":
@@ -33,7 +36,7 @@ def histogram(x, xlabel="x", ylabel="p(x)", refresh="new", **kwargs):
         }
     }
     
-    fh = open("static/temp.json",'w')
+    fh = open(temp_json,'w')
     json.dump(data,fh)
     fh.close()
     
@@ -53,7 +56,7 @@ def scatter(x, y, c, xlabel="x", ylabel="y", refresh="new"):
         }
     }
     
-    fh = open("static/temp.json",'w')
+    fh = open(temp_json,'w')
     json.dump(data,fh)
     fh.close()
     
