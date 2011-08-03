@@ -79,7 +79,7 @@ def bar(values, labels, ylabel="count", refresh="new"):
         }
     }
     
-    fh = open("static/temp.json",'w')
+    fh = open(temp_json,'w')
     json.dump(data,fh)
     fh.close()
     
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         # histogram example
         d3py.histogram(np.random.standard_normal(1000), density=True)
     
-    if True:
+    if False:
         # scatter example
         n = 400
         d1 = np.random.multivariate_normal([1,1], 0.5*np.eye(2), size=n)
@@ -116,10 +116,9 @@ if __name__ == "__main__":
         c = ["crimson" for i in range(n)] + ["green" for i in range(n)]
         d3py.scatter(x, y, c, xlabel="pigs", ylabel="cows")
         
-        
-        
-    
-    values = [1,4,7,3,2,9]
-    labels = ["a", "b", "c", "d", "e", "f"]
-    d3py.bar(values, labels)
+    if True:
+        # bar example
+        values = [1,4,7,3,2,9]
+        labels = ["a", "b", "c", "d", "e", "f"]
+        d3py.bar(values, labels)
     
