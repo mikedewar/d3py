@@ -36,12 +36,17 @@ class HistogramHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('histogram.html')
 
+class ScatterHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render('scatter.html')
+
 application = tornado.web.Application(
     [
         (r"/ping$", PingHandler),
         (r"/line$", LineHandler),
         (r"/bar$", BarHandler),
         (r"/histogram$", HistogramHandler),
+        (r"/scatter$", ScatterHandler),
         (r"/data$", DataHandler),
     ],
     static_path=os.path.join(os.path.dirname(__file__), "static"),
