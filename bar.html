@@ -2,33 +2,26 @@
 <head>
     <script type="text/javascript" src="/static/d3/d3.js"></script>
     <script type="text/javascript" src="/static/helper_functions.js"></script>
-     <link rel="stylesheet" type="text/css" href="/static/d3py.css"></link>
-    
-     <style>
-        #chart{
-            width:800px;
-            height:200px;
-        }
-        line {
-            stroke: LightSteelBlue;
-            stroke-width: 1;
-        }
-     </style>
-    
+    <link rel="stylesheet" type="text/css" href="/static/d3py.css"></link>
+    <style>
+    #chart {
+        width: 500px;
+    }
+    </style>
     <script> 
     function draw(json){
         
         console.log(json)
                 
-        var h = 200,
-            w = 800,
+        var h = parseFloat(d3.select("#chart").style("height")),
+            w = parseFloat(d3.select("#chart").style("width")),
             margin = 60;
         
+        console.log(h)
+        
         /* create an svg group to append all the chart elements to */
-        var g = d3.select("body")
+        var g = d3.select("#chart")
             .append("svg:svg")
-            .attr("width", w)
-            .attr("height", h)
             .append("svg:g");
         
         /* get the ranges of the data */
@@ -129,5 +122,6 @@
 <script type="text/javascript">
     d3.json("/static/temp.json", draw)
 </script>
+<div id="chart"></div>
 </body>
 </html>    
