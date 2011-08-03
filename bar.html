@@ -44,11 +44,11 @@
         var scales = get_scales(w, h, margin, ranges);
         scales.x = d3.scale.ordinal()
             .domain(json.values.map(function(d){return d.x}))
-            .rangeBands([margin, h-margin])
+            .rangeBands([margin, w-margin])
         
         /* calculte box width in pixels - it will have a 1 px gap between boxes*/
         box_width = ((scales.x(ranges.xMax) - scales.x(ranges.xMin)) / json.values.length) - 0.5
-        
+                
         /* draw the axes */
         draw_axes(g, ranges, scales)
         
@@ -80,7 +80,7 @@
             .data(json.values)
             .enter().append("svg:text")
                 .attr("class", "xTickLabel")
-                .text(function(d, i) { return json.labels.x[i]; })
+                .text(function(d, i) { return d.x; })
                 .attr("x", function(d) { return scales.x(d.x) + box_width/2; })
                 .attr("y", scales.y(ranges.yMin)+20)
                 .attr("text-anchor", "middle")
