@@ -43,6 +43,29 @@ def histogram(x, xlabel="x", ylabel="p(x)", refresh="new", **kwargs):
         pass
 
 
+def bar(values, labels, ylabel="count", refresh="new"):
+
+    data = {
+        "values":[
+            {"x":xi, "y":yi} 
+            for xi, yi in zip(labels, values)
+        ],
+        "labels":{
+            "x": None,
+            "y": ylabel
+        }
+    }
+    
+    fh = open("static/temp.json",'w')
+    json.dump(data,fh)
+    fh.close()
+    
+    if refresh == "new":
+        webbrowser.open("http://localhost:7666/bar", new=True)
+    elif refresh == "manual":
+        pass
+
+
 if __name__ == "__main__":
 
     import d3py
@@ -55,9 +78,12 @@ if __name__ == "__main__":
         y = np.exp(-a*x) * np.sin(x)
         d3py.line(x, y, xlabel="time", ylabel="value")
     
-    if True:
+    if False:
         # histogram example
         d3py.histogram(np.random.standard_normal(1000), density=True)
     
     
+    values = [1,4,7,3,2,9]
+    labels = ["a", "b", "c", "d", "e", "f"]
+    d3py.bar(values, labels)
     
