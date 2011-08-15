@@ -2,6 +2,11 @@ body{
     padding:0em;
     text-align:center;
 }
+/* pretty sure the chart stlye here does nothing */
+#chart{
+    width: 400px;
+    height: 200px;
+}
 line {
     stroke: LightSteelBlue;
     stroke-width: 1;
@@ -13,4 +18,9 @@ text {
 rect {
     fill-opacity:0.8;
     fill: crimson;
+}
+path {
+    stroke: crimson;
+    stroke-width: 1;
+    fill: none;
 }

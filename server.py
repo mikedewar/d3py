@@ -15,10 +15,24 @@ class DataHandler(tornado.web.RequestHandler):
         self.write(data)
 
     def get(self):
-        fh = open('static/temp.json')
-        data = json.loads(fh.read())
-        fh.close()
+        files = os.listdir("static/")
+        data = []
+        for f in files:
+            # TODO this should be a more robust regex
+            if f.startswith('temp'):
+                fh = open('static/%s'%f)
+                dataset = json.loads(fh.read())
+                logging.info(dataset)
+                data.append(dataset)
+                fh.close()
         self.api_response(data)
+
+class ClearHandler(tornado.web.RequestHandler):
+    def get(self):
+        files = os.listdir("static/")
+        for f in files:
+            if f.startswith('temp'):
+                os.unlink('static/%s'%f)
 
 class PingHandler(tornado.web.RequestHandler):
     def get(self):
@@ -39,6 +53,7 @@ class HistogramHandler(tornado.web.RequestHandler):
 class ScatterHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('scatter.html')
+
 
 application = tornado.web.Application(
     [

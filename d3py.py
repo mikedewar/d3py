@@ -2,9 +2,10 @@ import os
 import webbrowser
 import json
 import numpy as np
+import time
 
 path_to_this_file = os.path.abspath( __file__ )
-temp_json = os.path.join(os.path.dirname(path_to_this_file), "static/temp.json")
+temp_json = os.path.join(os.path.dirname(path_to_this_file), "static/temp_%s.json"%time.time())
 
 def line(x, y, xlabel="x", ylabel="y", refresh="new"):
     
