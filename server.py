@@ -22,7 +22,6 @@ class DataHandler(tornado.web.RequestHandler):
             if f.startswith('temp'):
                 fh = open('static/%s'%f)
                 dataset = json.loads(fh.read())
-                logging.info(dataset)
                 data.append(dataset)
                 fh.close()
         self.api_response(data)
@@ -42,6 +41,10 @@ class LineHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('line.html')
 
+class TimeSeriesHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render('timeseries.html')
+
 class BarHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('bar.html')
@@ -59,6 +62,7 @@ application = tornado.web.Application(
     [
         (r"/ping$", PingHandler),
         (r"/line$", LineHandler),
+        (r"/timeseries$", TimeSeriesHandler),
         (r"/bar$", BarHandler),
         (r"/histogram$", HistogramHandler),
         (r"/scatter$", ScatterHandler),

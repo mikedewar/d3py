@@ -7,15 +7,16 @@ import urllib
 import logging
 
 path_to_this_file = os.path.abspath( __file__ )
-temp_json = os.path.join(os.path.dirname(path_to_this_file), "static/temp_%s.json")
+this_path = os.path.dirname(path_to_this_file)
+temp_json = os.path.join(this_path, "static/temp_%s.json")
 
 
 def clear():
     urllib.urlopen("http://localhost:7666/clear")
 
-def draw():
+def draw(mode,refresh="new"):
     if refresh == "new":
-        webbrowser.open("http://localhost:7666/%s",new=True)
+        webbrowser.open("http://localhost:7666/%s"%mode,new=True)
     elif refresh == "manual":
         pass
 
@@ -33,6 +34,25 @@ def line(x, y, xlabel="x", ylabel="y", color="crimson", refresh="new"):
     fh = open(fname,'w')
     json.dump(data,fh)
     
+    draw("line")
+
+def timeseries(x, y, xlabel="x", ylabel="y", color="crimson", refresh="new"):
+    
+    data = {
+        "values":[{"x":xi, "y":yi} for xi, yi in zip(x, y)],
+        "labels":{
+            "x": xlabel,
+            "y": ylabel
+        },
+        "color":color
+    }
+    fname = temp_json%time.time()
+    fh = open(fname,'w')
+    json.dump(data,fh)
+    
+    draw("timeseries")
+
+
 
 def histogram(x, xlabel="x", ylabel="p(x)", refresh="new", **kwargs):
     
