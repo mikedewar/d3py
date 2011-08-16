@@ -1,4 +1,4 @@
-function axes(g, ranges, scales){
+function draw_axes(g, ranges, scales){
     
     var tickLength = 8;
     
@@ -16,6 +16,10 @@ function axes(g, ranges, scales){
         .attr("x2", scales.x(ranges.xMin))
         .attr("y2", scales.y(ranges.yMax))
     
+    
+}
+
+function draw_ticks(g, scales, ranges, tickLength){
     /* x ticks */
     g.selectAll(".xTicks")
         .data(scales.x.ticks(5))
@@ -35,7 +39,9 @@ function axes(g, ranges, scales){
             .attr("x2", scales.x(ranges.xMin))
             .attr("y1", function(d) { return scales.y(d); })
             .attr("y2", function(d) { return scales.y(d); })
+}
 
+function draw_tick_labels(g, scales, ranges, tickLength){
     /* x tick labels */
     g.selectAll(".xTickLabel")
         .data(scales.x.ticks(5))
@@ -85,12 +91,27 @@ function get_range(data){
     Note d3's funky max() function, which allows you to pass in an 
     accessor function just like map()
     */
-    
     return {
-        xMax : d3.max(data, function(d){return d.x;}),
-        xMin : d3.min(data, function(d){return d.x;}),
-        yMax : d3.max(data, function(d){return d.y;}),
-        yMin : d3.min(data, function(d){return d.y;})
+        xMax : d3.max(
+            data, 
+            function(data){
+                return d3.max(data.values, function(vi){return vi.x;})
+            }),
+        xMin : d3.min(
+            data, 
+            function(data){
+                return d3.min(data.values, function(vi){return vi.x ;})
+            }),
+        yMax : d3.max(
+            data, 
+            function(data){
+                return d3.max(data.values, function(vi){return vi.y ;})
+            }),
+        yMin : d3.min(
+            data, 
+            function(data){
+                return d3.min(data.values, function(vi){return vi.y ;})
+            }),
     }
 }
 
@@ -102,8 +123,6 @@ function axis_labels(g, labels, margin, scales, ranges){
         .attr("x", scales.x(ranges.xMin + ((ranges.xMax-ranges.xMin)/2)))
         .attr("y", scales.y(ranges.yMin)+40)
     
-    g.append("svg:text")
-        .text(labels.y)
-        .attr("y", scales.y(ranges.yMin + ((ranges.yMax-ranges.yMin)/2)))
+    
     
 }

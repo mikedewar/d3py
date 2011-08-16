@@ -3,26 +3,35 @@ import webbrowser
 import json
 import numpy as np
 import time
+import urllib
+import logging
 
 path_to_this_file = os.path.abspath( __file__ )
-temp_json = os.path.join(os.path.dirname(path_to_this_file), "static/temp_%s.json"%time.time())
+temp_json = os.path.join(os.path.dirname(path_to_this_file), "static/temp_%s.json")
 
-def line(x, y, xlabel="x", ylabel="y", refresh="new"):
+
+def clear():
+    urllib.urlopen("http://localhost:7666/clear")
+
+def draw():
+    if refresh == "new":
+        webbrowser.open("http://localhost:7666/%s",new=True)
+    elif refresh == "manual":
+        pass
+
+def line(x, y, xlabel="x", ylabel="y", color="crimson", refresh="new"):
     
     data = {
         "values":[{"x":xi, "y":yi} for xi, yi in zip(x, y)],
         "labels":{
             "x": xlabel,
             "y": ylabel
-        }
+        },
+        "color":color
     }
-    fh = open(temp_json,'w')
+    fname = temp_json%time.time()
+    fh = open(fname,'w')
     json.dump(data,fh)
-    
-    if refresh == "new":
-        webbrowser.open("http://localhost:7666/line",new=True)
-    elif refresh == "manual":
-        pass
     
 
 def histogram(x, xlabel="x", ylabel="p(x)", refresh="new", **kwargs):
@@ -37,14 +46,9 @@ def histogram(x, xlabel="x", ylabel="p(x)", refresh="new", **kwargs):
         }
     }
     
-    fh = open(temp_json,'w')
+    fh = open(temp_json%time.time(),'w')
     json.dump(data,fh)
     fh.close()
-    
-    if refresh == "new":
-        webbrowser.open("http://localhost:7666/histogram",new=True)
-    elif refresh == "manual":
-        pass
 
 
 def scatter(x, y, c, xlabel="x", ylabel="y", refresh="new"):
@@ -57,7 +61,7 @@ def scatter(x, y, c, xlabel="x", ylabel="y", refresh="new"):
         }
     }
     
-    fh = open(temp_json,'w')
+    fh = open(temp_json%time.time(),'w')
     json.dump(data,fh)
     fh.close()
     
@@ -80,7 +84,7 @@ def bar(values, labels, ylabel="count", refresh="new"):
         }
     }
     
-    fh = open(temp_json,'w')
+    fh = open(temp_json%time.time(),'w')
     json.dump(data,fh)
     fh.close()
     
@@ -89,18 +93,20 @@ def bar(values, labels, ylabel="count", refresh="new"):
     elif refresh == "manual":
         pass
 
+clear()
 
 if __name__ == "__main__":
 
     import d3py
     
-    if False:
+    if True:
         # line plot example
         T = 5*np.pi
         x = np.linspace(-T,T,100)
-        a = 0.05
-        y = np.exp(-a*x) * np.sin(x)
-        d3py.line(x, y, xlabel="time", ylabel="value")
+        colours = ["red","blue","green"]
+        for a,c in zip([0.1, 0.2, 0.3], colours):
+            y = np.exp(-a*x) * np.sin(x)
+            d3py.line(x, y, xlabel="time", ylabel="value", color=c)
     
     if False:
         # histogram example
@@ -117,7 +123,7 @@ if __name__ == "__main__":
         c = ["crimson" for i in range(n)] + ["green" for i in range(n)]
         d3py.scatter(x, y, c, xlabel="pigs", ylabel="cows")
         
-    if True:
+    if False:
         # bar example
         values = [1,4,7,3,2,9]
         labels = ["a", "b", "c", "d", "e", "f"]

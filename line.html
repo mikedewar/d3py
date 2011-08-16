@@ -44,9 +44,12 @@
             .data(json.data)
             .enter()
             .append("svg:path")
+                .attr("id",function(d,i){return i})
                 .attr("d", function(d){
                     return line(d.values);
-                })        
+                })
+                .style("stroke", function(d){return d.color})
+                
     }
 </script>
 </head>

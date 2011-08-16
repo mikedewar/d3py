@@ -63,6 +63,7 @@ application = tornado.web.Application(
         (r"/histogram$", HistogramHandler),
         (r"/scatter$", ScatterHandler),
         (r"/data$", DataHandler),
+        (r"/clear$", ClearHandler)
     ],
     static_path=os.path.join(os.path.dirname(__file__), "static"),
     debug=True
