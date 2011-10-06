@@ -4,7 +4,7 @@ import json
 import numpy as np
 import time
 import urllib
-import logging
+import server
 
 path_to_this_file = os.path.abspath( __file__ )
 temp_json = os.path.join(os.path.dirname(path_to_this_file), "static/temp_%s.json")
@@ -13,9 +13,9 @@ temp_json = os.path.join(os.path.dirname(path_to_this_file), "static/temp_%s.jso
 def clear():
     urllib.urlopen("http://localhost:7666/clear")
 
-def draw():
+def draw(type, refresh="new"):
     if refresh == "new":
-        webbrowser.open("http://localhost:7666/%s",new=True)
+        webbrowser.open("http://localhost:7666/%s"%type,new=True)
     elif refresh == "manual":
         pass
 
@@ -33,6 +33,8 @@ def line(x, y, xlabel="x", ylabel="y", color="crimson", refresh="new"):
     fh = open(fname,'w')
     json.dump(data,fh)
     
+    draw("line")
+    
 
 def histogram(x, xlabel="x", ylabel="p(x)", refresh="new", **kwargs):
     
@@ -49,6 +51,8 @@ def histogram(x, xlabel="x", ylabel="p(x)", refresh="new", **kwargs):
     fh = open(temp_json%time.time(),'w')
     json.dump(data,fh)
     fh.close()
+    
+    draw("histogram")
 
 
 def scatter(x, y, c, xlabel="x", ylabel="y", refresh="new"):
@@ -69,6 +73,8 @@ def scatter(x, y, c, xlabel="x", ylabel="y", refresh="new"):
         webbrowser.open("http://localhost:7666/scatter",new=True)
     elif refresh == "manual":
         pass
+    
+    draw("scatter")
 
 
 def bar(values, labels, ylabel="count", refresh="new"):
@@ -88,12 +94,15 @@ def bar(values, labels, ylabel="count", refresh="new"):
     json.dump(data,fh)
     fh.close()
     
-    if refresh == "new":
-        webbrowser.open("http://localhost:7666/bar", new=True)
-    elif refresh == "manual":
-        pass
+    draw("bar")
+        
 
+
+### on import clear the canvas and start the server
+# this needs to start in a separte process or something
+#server.main()
 clear()
+
 
 if __name__ == "__main__":
 
