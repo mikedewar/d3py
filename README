@@ -1,5 +1,0 @@
-This is d3py - a python plotting library, built on d3.js, that produces basic plots from python in a browser window.
-
-Please see the wiki for examples. 
-
-If you'd like to contribute, the best example to copy so far is histogram.html.
