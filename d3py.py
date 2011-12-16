@@ -1,151 +1,114 @@
+import pandas
+import json
 import os
 import webbrowser
-import json
-import numpy as np
-import time
-import urllib
-import logging
 
-path_to_this_file = os.path.abspath( __file__ )
-this_path = os.path.dirname(path_to_this_file)
-temp_json = os.path.join(this_path, "static/temp_%s.json")
+class Figure(object):
+    def __init__(self, data, name):
+        self.data = data
+        self.name = name
+        self.js = """
+function(data){
 
-
-def clear():
-    urllib.urlopen("http://localhost:7666/clear")
-
-def draw(mode,refresh="new"):
-    if refresh == "new":
-        webbrowser.open("http://localhost:7666/%s"%mode,new=True)
-    elif refresh == "manual":
+vis = d3.select('#chart')
+    .append('svg:g');
+        """
+        self.css = ""
+        fh = open('d3py_template.html')
+        self.html = fh.read()
+        fh.close()
+    
+    def add_geom(self, geom):
+        self.js += geom.js
+        self.css += geom.css
+    
+    def __add__(self, geom):
+        self.add_geom(geom)
+    
+    def data_to_json(self):
+        d = [ 
+            dict([
+                (colname, row[i]) 
+                for i,colname in enumerate(self.data.columns)
+            ])
+            for row in self.data.values
+        ]
+        return json.dumps(d)
+    
+    def show():
+        # close javascript callback
+        self.js += "}"
+        # make directory
+        os.mkdir("%s"%name)
+        # write data
+        fh = open("%s/%s.json"%(self.name, self.name), 'w')
+        fh.write(self.data_to_json())
+        fh.close()
+        # write css
+        fh = open("%s/%s.css"%(self.name, self.name), 'w')
+        fh.write(self.css)
+        fh.close()
+        # write javascript
+        fh = open("%s/%s.js"%(self.name, self.name), 'w')
+        fh.write(self.js)
+        fh.close()
+        # write html
+        fh = open("%s/%s.html"%(self.name,self.name),'w')
+        # start server
         pass
+        # fire up a browser 
+        webbrowser.open_new_tab("d3py.html?show=%s"%name)
 
-def line(x, y, xlabel="x", ylabel="y", color="crimson", refresh="new"):
+class Geom(object):
+    def __init__(self):
+        self.js = ""
+        self.css = ""
     
-    data = {
-        "values":[{"x":xi, "y":yi} for xi, yi in zip(x, y)],
-        "labels":{
-            "x": xlabel,
-            "y": ylabel
-        },
-        "color":color
-    }
-    fname = temp_json%time.time()
-    fh = open(fname,'w')
-    json.dump(data,fh)
+    def build_js(self):
+        raise NotImplementedError
     
-    draw("line")
+    def build_css(self):
+        raise NotImplementedError
+    
 
-def timeseries(x, y, xlabel="x", ylabel="y", color="crimson", refresh="new"):
-    
-    data = {
-        "values":[{"x":xi, "y":yi} for xi, yi in zip(x, y)],
-        "labels":{
-            "x": xlabel,
-            "y": ylabel
-        },
-        "color":color
-    }
-    fname = temp_json%time.time()
-    fh = open(fname,'w')
-    json.dump(data,fh)
-    
-    draw("timeseries")
-
-
-
-def histogram(x, xlabel="x", ylabel="p(x)", refresh="new", **kwargs):
-    
-    values, edges = np.histogram(x, **kwargs)
-    
-    data = {
-        "values":[{"x":xi, "y":yi} for xi, yi in zip(edges, values)],
-        "labels":{
-            "x": xlabel,
-            "y": ylabel
-        }
-    }
-    
-    fh = open(temp_json%time.time(),'w')
-    json.dump(data,fh)
-    fh.close()
-
-
-def scatter(x, y, c, xlabel="x", ylabel="y", refresh="new"):
-    
-    data = {
-        "values":[{"x":xi, "y":yi, "c":ci} for (xi, yi, ci) in zip(x,y,c)],
-        "labels":{
-            "x": xlabel,
-            "y": ylabel
-        }
-    }
-    
-    fh = open(temp_json%time.time(),'w')
-    json.dump(data,fh)
-    fh.close()
-    
-    if refresh == "new":
-        webbrowser.open("http://localhost:7666/scatter",new=True)
-    elif refresh == "manual":
-        pass
-
-
-def bar(values, labels, ylabel="count", refresh="new"):
-
-    data = {
-        "values":[
-            {"x":xi, "y":yi} 
-            for xi, yi in zip(labels, values)
-        ],
-        "labels":{
-            "x": None,
-            "y": ylabel
-        }
-    }
-    
-    fh = open(temp_json%time.time(),'w')
-    json.dump(data,fh)
-    fh.close()
-    
-    if refresh == "new":
-        webbrowser.open("http://localhost:7666/bar", new=True)
-    elif refresh == "manual":
-        pass
-
-clear()
-
+class Line(Geom):
+    def __init__(self,x,y,**kwargs):
+        Geom.__init__(self)
+        self.x = x
+        self.y = y
+        self.styles = kwargs
+        self.build_js()
+        self.build_css()
+        
+    def build_js(self):
+        
+        # add the line (actually there's a shit ton todo before this)
+        self.js += """
+var line = d3.svg.line()
+    .x(function(d,i) { return d.%s; })
+    .y(function(d) {return d.%s; })
+        """%(self.x, self.y)
+        
+        # append the line to the g element
+        self.js += """
+g.append('svg:path')
+    .attr('d', line(data))
+        """
+        
+    def build_css(self):
+        self.css = "line {\n"
+        for key in self.styles:
+            self.css += "%s: %s\n"%(key, kwargs[key])
+        self.css += "}"
+        
 if __name__ == "__main__":
-
-    import d3py
+    import numpy as np
     
-    if True:
-        # line plot example
-        T = 5*np.pi
-        x = np.linspace(-T,T,100)
-        colours = ["red","blue","green"]
-        for a,c in zip([0.1, 0.2, 0.3], colours):
-            y = np.exp(-a*x) * np.sin(x)
-            d3py.line(x, y, xlabel="time", ylabel="value", color=c)
+    df = pandas.DataFrame({
+        "time" : [1,2,3,4,5],
+        "temp" : np.random.rand(5)
+    })
     
-    if False:
-        # histogram example
-        d3py.histogram(np.random.standard_normal(1000), density=True)
-    
-    if False:
-        # scatter example
-        n = 400
-        d1 = np.random.multivariate_normal([1,1], 0.5*np.eye(2), size=n)
-        d2 = list(np.random.multivariate_normal([-1,-1], 2*np.eye(2), size=n))
-        
-        x = [d[0] for d in d1] + [d[0] for d in d2]
-        y = [d[1] for d in d1] + [d[1] for d in d2]
-        c = ["crimson" for i in range(n)] + ["green" for i in range(n)]
-        d3py.scatter(x, y, c, xlabel="pigs", ylabel="cows")
-        
-    if False:
-        # bar example
-        values = [1,4,7,3,2,9]
-        labels = ["a", "b", "c", "d", "e", "f"]
-        d3py.bar(values, labels)
-    
+    fig = Figure(df, name="random_temp") # instantiates the figure object
+    fig += Line(x="time", y="temp") # adds a line
+    fig.show() # writes 3 files, then draws some beautiful thing in Chrome
