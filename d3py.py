@@ -35,9 +35,16 @@ vis = d3.select('#chart')
         ]
         return json.dumps(d)
     
+    def _close_js():
+        """
+        closes the javascript. Used in show, but you might also want this
+        if you want to play with the callback
+        """
+        self.js += "}"
+    
     def show():
         # close javascript callback
-        self.js += "}"
+        self._close_js()
         # make directory
         os.mkdir("%s"%name)
         # write data
