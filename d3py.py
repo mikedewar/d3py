@@ -78,6 +78,11 @@ class Figure(object):
         self.add_js("}")
     
     def serve(self):
+        """
+        start up a server to serve the files for this vis. 
+        
+        TODO NOTE THAT THIS SHOULD BE A SEPARATE PROCESS OH MY GOD!!! PLEASE SOMEONE FIX THIS IF POSS
+        """
         PORT = 8000
         Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
         httpd = SocketServer.TCPServer(("", PORT), Handler)
@@ -115,7 +120,8 @@ class Figure(object):
         webbrowser.open_new_tab("d3py.html?show=%s"%name)
 
 class Geom(object):
-    def __init__(self):
+    def __init__(self, **kwargs):
+        self.styles = kwargs
         self.js = ""
         self.css = ""
     
@@ -142,10 +148,9 @@ class Geom(object):
 
 class Line(Geom):
     def __init__(self,x,y,**kwargs):
-        Geom.__init__(self)
+        Geom.__init__(self,**kwargs)
         self.x = x
         self.y = y
-        self.styles = kwargs
         self.build_js()
         self.build_css()
         
@@ -157,21 +162,35 @@ class Line(Geom):
         # append the line to the g element
         self.add_js("g.append('svg:path')")
         self.add_js(".attr('d', line(data))")
+        self.add_js(".attr('class', 'geom_line')")
         
     def build_css(self):
         self.css = "line {\n"
         for key in self.styles:
-            self.css += "%s: %s\n"%(key, kwargs[key])
+            self.css += "%s: %s\n"%(key, self.styles[key])
         self.css += "}"
-        
+
+class Bar(Geom):
+    def __init__(self,x,y,**kwargs):
+        Geom.__init__(self, kwargs)
+        raise NotImplementedError
+
+class Point(Geom):
+    def __init__(self,x,y,**kwargs):
+        Geom.__init__(self, kwargs)
+        raise NotImplementedError
+
+
 if __name__ == "__main__":
     import numpy as np
     
+    # some test data
+    T = 100
     df = pandas.DataFrame({
-        "time" : [1,2,3,4,5],
-        "temp" : np.random.rand(5)
+        "time" : range(T),
+        "temp" : np.random.rand(T)
     })
-    
+    # draw, psuedo ggplot style
     fig = Figure(df, name="random_temp") # instantiates the figure object
-    fig += Line(x="time", y="temp") # adds a line
+    fig += Line(x="time", y="temp", color="red") # adds a red line
     fig.show() # writes 3 files, then draws some beautiful thing in Chrome
