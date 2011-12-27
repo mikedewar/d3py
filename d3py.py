@@ -2,21 +2,52 @@ import pandas
 import json
 import os
 import webbrowser
+import SimpleHTTPServer
+import SocketServer
 
 class Figure(object):
-    def __init__(self, data, name):
+    def __init__(self, data, name, port=8000):
+        """
+        data : dataFrame
+            data used for the plot. This dataFrame is column centric
+        name : string
+            name of visualisation. This will appear in the title
+            bar of the webpage, and is the name of the folder where
+            your files will be stored.
+        """
+        # store data
         self.data = data
         self.name = name
-        self.js = """
-function(data){
-
-vis = d3.select('#chart')
-    .append('svg:g');
-        """
+        # port
+        self.port = port
+        # initialise strings
+        self.js = ""
         self.css = ""
-        fh = open('d3py_template.html')
+        # 
+        self.add_js("function draw(data){")
+        self.add_js("g = d3.select('#chart')")
+        self.add_js(".append('svg:g');")
+        # we start the html using a template - it's pretty simple
+        fh = open('static/d3py_template.html')
         self.html = fh.read()
         fh.close()
+        self.html = self.html.replace("{{ port }}", str(port))
+        self.html = self.html.replace("{{ name }}", name)
+        print self.html
+        
+    
+    def add_js(self,s):
+        """
+        adds a line of javascript to the js object. Right now this 
+        just deals with newlines, but who knows? Maybe this could
+        do pretty indenting one day, too.
+        """
+        if not (s.startswith("function") or s.startswith("}")):
+            self.js += "\t"
+        if s.startswith('.'):
+            self.js += "\t"
+        self.js += s
+        self.js += "\n"
     
     def add_geom(self, geom):
         self.js += geom.js
@@ -24,6 +55,10 @@ vis = d3.select('#chart')
     
     def __add__(self, geom):
         self.add_geom(geom)
+    
+    def __iadd__(self, geom):
+        self.add_geom(geom)
+        return self
     
     def data_to_json(self):
         d = [ 
@@ -35,18 +70,29 @@ vis = d3.select('#chart')
         ]
         return json.dumps(d)
     
-    def _close_js():
+    def _close_js(self):
         """
         closes the javascript. Used in show, but you might also want this
         if you want to play with the callback
         """
-        self.js += "}"
+        self.add_js("}")
     
-    def show():
+    def serve(self):
+        PORT = 8000
+        Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+        httpd = SocketServer.TCPServer(("", PORT), Handler)
+        print "you can find your chart at http://localhost:%s/%s/%s.html"%(PORT,self.name,self.name)
+        httpd.serve_forever()
+    
+    def show(self):
         # close javascript callback
         self._close_js()
+        print self.js
         # make directory
-        os.mkdir("%s"%name)
+        try:
+            os.mkdir("%s"%self.name)
+        except OSError:
+            pass
         # write data
         fh = open("%s/%s.json"%(self.name, self.name), 'w')
         fh.write(self.data_to_json())
@@ -61,8 +107,10 @@ vis = d3.select('#chart')
         fh.close()
         # write html
         fh = open("%s/%s.html"%(self.name,self.name),'w')
+        fh.write(self.html)
+        fh.close()
         # start server
-        pass
+        self.serve()
         # fire up a browser 
         webbrowser.open_new_tab("d3py.html?show=%s"%name)
 
@@ -70,6 +118,20 @@ class Geom(object):
     def __init__(self):
         self.js = ""
         self.css = ""
+    
+    def add_js(self,s):
+        """
+        adds a line of javascript to the js object. Right now this 
+        just deals with newlines, but who knows? Maybe this could
+        do pretty indenting one day, too.
+        """
+        if not (s.startswith("function") or s.startswith("}")):
+            self.js += "\t"
+        if s.startswith('.'):
+            self.js += "\t"
+        self.js += s
+        self.js += "\n"
+
     
     def build_js(self):
         raise NotImplementedError
@@ -88,19 +150,13 @@ class Line(Geom):
         self.build_css()
         
     def build_js(self):
-        
         # add the line (actually there's a shit ton todo before this)
-        self.js += """
-var line = d3.svg.line()
-    .x(function(d,i) { return d.%s; })
-    .y(function(d) {return d.%s; })
-        """%(self.x, self.y)
-        
+        self.add_js("var line = d3.svg.line()")
+        self.add_js(".x(function(d,i) { return d.%s; })"%self.x)
+        self.add_js(".y(function(d) {return d.%s; })"%self.y)
         # append the line to the g element
-        self.js += """
-g.append('svg:path')
-    .attr('d', line(data))
-        """
+        self.add_js("g.append('svg:path')")
+        self.add_js(".attr('d', line(data))")
         
     def build_css(self):
         self.css = "line {\n"
