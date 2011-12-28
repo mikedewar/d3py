@@ -5,10 +5,30 @@ import webbrowser
 import SimpleHTTPServer
 import SocketServer
 
-import lib
+class D3object(object):
+    def add_js(self,s):
+        """
+        adds a line of javascript to the js object. Tries to do
+        some nice formatting
+        """
+        if not (s.startswith("function") or s.startswith("}")):
+            self.js += "\t"
+        if s.startswith('.'):
+            self.js += "\t"
+        self.js += s
+        self.js += "\n"
+        if s.endswith(";"):
+            self.js += "\n"
+    
+    def add_css(self,s):
+        if not (("{" in s) or ("}" in s)):
+            self.css += "\t"
+        self.css += s
+        self.css += "\n"
+    
 
-class Figure(object):
-    def __init__(self, data, name, port=8000):
+class Figure(D3object):
+    def __init__(self, data, name, width=400, height=100, margin=10, port=8000):
         """
         data : dataFrame
             data used for the plot. This dataFrame is column centric
@@ -17,7 +37,6 @@ class Figure(object):
             bar of the webpage, and is the name of the folder where
             your files will be stored.
         """
-        self.add_js = lib.add_js
         # store data
         self.data = data
         self.name = name
@@ -29,6 +48,7 @@ class Figure(object):
         # 
         self.add_js("function draw(data){")
         self.add_js("g = d3.select('#chart')")
+        self.add_js(".append('svg:svg')")
         self.add_js(".append('svg:g');")
         # we start the html using a template - it's pretty simple
         fh = open('static/d3py_template.html')
@@ -36,6 +56,21 @@ class Figure(object):
         fh.close()
         self.html = self.html.replace("{{ port }}", str(port))
         self.html = self.html.replace("{{ name }}", name)
+        # build up the basic css
+        self.add_css("#chart {width: %spx; height: %spx;}"%(width, height))
+        # we make some structures that all the geoms can use
+        # we build the ranges up so that each column can be used as an x or y axis
+        # this is a bit hacky, but should suffice for now
+        self.add_js("var scales = {")
+        for colname in data.columns:
+            self.add_js("\t%s_y: d3.scale.linear()"%colname)
+            self.add_js(".domain([%s, %s])"%(max(data[colname]), min(data[colname])))
+            self.add_js(".range([%s, %s]),"%(margin, height-margin))
+            self.add_js("\t%s_x: d3.scale.linear()"%colname)
+            self.add_js(".domain([%s, %s])"%(min(data[colname]), max(data[colname])))
+            self.add_js(".range([%s, %s]),"%(margin, width-margin))
+        self.add_js("};")
+        
     
     def add_geom(self, geom):
         self.js += geom.js
@@ -80,7 +115,6 @@ class Figure(object):
     def show(self):
         # close javascript callback
         self._close_js()
-        print self.js
         # make directory
         try:
             os.mkdir("%s"%self.name)
@@ -109,6 +143,7 @@ class Figure(object):
 
 if __name__ == "__main__":
     import numpy as np
+    from geoms import *
     
     # some test data
     T = 100
@@ -118,5 +153,5 @@ if __name__ == "__main__":
     })
     # draw, psuedo ggplot style
     fig = Figure(df, name="random_temp") # instantiates the figure object
-    fig += Line(x="time", y="temp", color="red") # adds a red line
+    fig += Line(x="time", y="temp", stroke="red") # adds a red line
     fig.show() # writes 3 files, then draws some beautiful thing in Chrome
