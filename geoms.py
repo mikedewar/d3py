@@ -54,8 +54,25 @@ class Line(Geom):
 
 class Bar(Geom):
     def __init__(self,x,y,**kwargs):
-        Geom.__init__(self, kwargs)
-        raise NotImplementedError
+        Geom.__init__(self,**kwargs)
+        self.x = x
+        self.y = y
+        self.build_js()
+        self.build_css()
+    
+    def build_js(self):
+        self.add_js("g.selectAll('.bars')")
+        self.add_js(".data(data)")
+        self.add_js(".enter()")
+        self.add_js(".append('svg:rect')")
+        self.add_js(".attr('x',function(d) {return scales.%s_x(d.%s)} )"%(self.x,self.x))
+        self.add_js(".attr('y',function(d) {")
+        self.add_js("return d.%s_y > 0 ? scales.%s_y(d.%s) : scales.%s_y(0);"%(self.y, self.y, self.y, self.y))
+        self.add_js("})")
+        self.add_js(".attr('width', box_width )")
+        self.add_js(".attr('height',function(d) {")
+        self.add_js("return d.%s > 0 ? scales.%s_y(0) - scales.%s_y(d.%s) : scales.%s_y(d.%s) - scales.%s_y(0);"%(self.y, self.y, self.y, self.y, self.y, self.y, self.y))
+        self.add_js("})")
 
 class Point(Geom):
     def __init__(self,x,y,c=None,**kwargs):

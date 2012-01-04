@@ -4,6 +4,23 @@ import os
 import webbrowser
 import SimpleHTTPServer
 import SocketServer
+import subproceses
+
+def serve(self):
+    """
+    start up a server to serve the files for this vis. 
+        
+    TODO NOTE THAT THIS SHOULD BE A SEPARATE PROCESS OH MY GOD!!! PLEASE SOMEONE FIX THIS IF POSS
+    """
+    PORT = 8000
+    Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+    httpd = SocketServer.TCPServer(("", PORT), Handler)
+    print "you can find your chart at http://localhost:%s/%s/%s.html"%(PORT,self.name,self.name)
+    httpd.serve_forever()
+    "python -m SimpleHTTPServer 8000"
+
+
+
 
 class D3object(object):
     def add_js(self,s):
@@ -104,18 +121,6 @@ class Figure(D3object):
         """
         self.add_js("}")
     
-    def serve(self):
-        """
-        start up a server to serve the files for this vis. 
-        
-        TODO NOTE THAT THIS SHOULD BE A SEPARATE PROCESS OH MY GOD!!! PLEASE SOMEONE FIX THIS IF POSS
-        """
-        PORT = 8000
-        Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
-        httpd = SocketServer.TCPServer(("", PORT), Handler)
-        print "you can find your chart at http://localhost:%s/%s/%s.html"%(PORT,self.name,self.name)
-        httpd.serve_forever()
-    
     def show(self):
         # close javascript callback
         self._close_js()
@@ -150,7 +155,7 @@ if __name__ == "__main__":
     from geoms import *
     
     # some test data
-    T = 100
+    T = 10
     df = pandas.DataFrame({
         "time" : range(T),
         "pressure": np.random.rand(T),
@@ -160,4 +165,7 @@ if __name__ == "__main__":
     fig = Figure(df, name="random_temp", width=300, height=300) # instantiates the figure object
     #fig += Line(x="time", y="temp", stroke="red") # adds a red line
     fig += Point(x="pressure", y="temp", fill="red") # adds red points
-    fig.show() # writes 3 files, then draws some beautiful thing in Chrome
+
+    fig1 = Figure(df, name="random_temp") # instantiates the figure object
+    fig1 += Bar(x="time", y="temp")
+    fig1.show() # writes 3 files, then draws some beautiful thing in Chrome
