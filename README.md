@@ -5,7 +5,7 @@ This is `d3py`: a plotting library for python based on d3. The aim of d3py is to
 
 `d3py` accomplishes this by building on two excellent packages. The first is `d3.js`, which is a javascript library for creating data driven documents, which allows us to place arbitrary svg into a browser window. The second is the `pandas` Python module, which blesses Python with (amongst other things) the DataFrame data structure.
 
-The idioms used to plot data are very simple, and borrow from R's (http://had.co.nz/ggplot2/)[ggplot2] (Hadley Wickham) and Python's (http://matplotlib.sourceforge.net/)[matplotlib] (John Hunter et al):
+The idioms used to plot data are very simple, and borrow from R's [ggplot2](http://had.co.nz/ggplot2/) (Hadley Wickham) and Python's [matplotlib](http://matplotlib.sourceforge.net/) (John Hunter et al):
 
 1. create a Figure object around a `DataFrame`
 2. add 'geom's to the figure object to plot specific combinations of columns of the data frame. 
