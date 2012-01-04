@@ -7,8 +7,11 @@ This is `d3py`: a plotting library for python based on d3. The aim of d3py is to
 
 The idioms used to plot data are very simple, and borrow from R's [ggplot2](http://had.co.nz/ggplot2/) (Hadley Wickham) and Python's [matplotlib](http://matplotlib.sourceforge.net/) (John Hunter et al):
 
-1. create a Figure object around a `DataFrame`
-2. add 'geom's to the figure object to plot specific combinations of columns of the data frame. 
+1. create a `Figure` object around a `DataFrame`
+2. add `geom`s to the figure object to plot specific combinations of columns of the data frame.
+3. show the figure, which serves up the figure in a browser window
+4. muck about with the style of the plot using the browser's developer tools
+5. share FTW! 
 
 Each geom takes as parameters an appropriate number of column names of the data frame as arguments. For example a line, which has two dimensions, takes an x-value and a y-value. A point, which makes up a scatter plot, has three dimensions and so takes three parameters: x, y and colour (in the future it could take size, too!).
 
@@ -32,6 +35,6 @@ An example session could like:
 	# instantiate the figure object
 	fig = d3py.Figure(df, name="random_temp", width=300, height=300) 
 	# add some red points
-	fig += d3py.Point(x="pressure", y="temp", fill="red")
+	fig += d3py.geoms.Point(x="pressure", y="temp", fill="red")
 	# writes 3 files, starts up a server, then draws some beautiful points in Chrome
 	fig.show() 
