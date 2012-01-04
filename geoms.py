@@ -82,8 +82,6 @@ class Point(Geom):
             self.add_css ("%s: %s\n"%(key, self.styles[key]))
         self.add_css("}")
         
-        
-    
     def build_js(self):
         self.add_js("g.selectAll('.geom_point')")
         self.add_js(".data(data)")
