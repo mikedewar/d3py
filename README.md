@@ -13,7 +13,7 @@ The idioms used to plot data are very simple, and borrow from R's [ggplot2](http
 4. muck about with the style of the plot using the browser's developer tools
 5. share FTW! 
 
-Each geom takes as parameters an appropriate number of column names of the data frame as arguments. For example a line, which has two dimensions, takes an x-value and a y-value. A point, which makes up a scatter plot, has three dimensions and so takes three parameters: x, y and colour (in the future it could take size, too!).
+Each geom takes as parameters an appropriate number of column names of the data frame as arguments. For example the `Line` geom, which has two dimensions, takes an x-value and a y-value. A `Point` geom, which makes up a scatter plot, has three dimensions and so takes three parameters: x, y and colour (in the future it could take size, too!).
 
 Each geom is styled using css which you can pass in arbitrarily. So, for example, the `Point` geom comes with a bunch of default styles, but you can also specify `fill=red` as a keyword argument which will add a custom css line for that set of points which will turn them red. This means you can style the plot live in the browser using Firebug in Firefox or Chrome's developer tools.
 
@@ -33,7 +33,7 @@ An example session could like:
 	})
 	## build up a figure, ggplot2 style
 	# instantiate the figure object
-	fig = d3py.Figure(df, name="random_temp", width=300, height=300) 
+	fig = d3py.Figure(df, name="basic_example", width=300, height=300) 
 	# add some red points
 	fig += d3py.geoms.Point(x="pressure", y="temp", fill="red")
 	# writes 3 files, starts up a server, then draws some beautiful points in Chrome
