@@ -73,6 +73,10 @@ class Figure(D3object):
         
     
     def add_geom(self, geom):
+        errmsg = "the %s geom requests %s which is not in our dataFrame!"
+        for p in geom.params:
+            if p:
+                assert p in self.data, errmsg%(geom.name, p)
         self.js += geom.js
         self.css += geom.css
     
@@ -149,9 +153,11 @@ if __name__ == "__main__":
     T = 100
     df = pandas.DataFrame({
         "time" : range(T),
+        "pressure": np.random.rand(T),
         "temp" : np.random.rand(T)
     })
     # draw, psuedo ggplot style
-    fig = Figure(df, name="random_temp") # instantiates the figure object
-    fig += Line(x="time", y="temp", stroke="red") # adds a red line
+    fig = Figure(df, name="random_temp", width=300, height=300) # instantiates the figure object
+    #fig += Line(x="time", y="temp", stroke="red") # adds a red line
+    fig += Point(x="pressure", y="temp", fill="red") # adds red points
     fig.show() # writes 3 files, then draws some beautiful thing in Chrome

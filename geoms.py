@@ -18,7 +18,9 @@ class Line(Geom):
         Geom.__init__(self,**kwargs)
         self.x = x
         self.y = y
+        self.params = [x,y]
         self.debug = True
+        self.name = "line"
         self.build_js()
         self.build_css()
         
@@ -56,6 +58,43 @@ class Bar(Geom):
         raise NotImplementedError
 
 class Point(Geom):
-    def __init__(self,x,y,**kwargs):
-        Geom.__init__(self, kwargs)
-        raise NotImplementedError
+    def __init__(self,x,y,c=None,**kwargs):
+        Geom.__init__(self, **kwargs)
+        self.x = x
+        self.y = y
+        self.c = c
+        self.params = [x,y,c]
+        self.name = "point"
+        self.build_css()
+        self.build_js()
+    
+    def build_css(self):
+        self.add_css(".geom_point {")
+        self.add_css("stroke-width: 1px;")
+        self.add_css("stroke: black;")
+        self.add_css("fill-opacity: 0.3;")
+        self.add_css("stroke-opacity: 1;")
+        self.add_css("fill: blue;")
+        self.add_css("}")
+        # arbitrary styles
+        self.add_css("#point_%s_%s_%s {\n"%(self.x,self.y,self.c))
+        for key in self.styles:
+            self.add_css ("%s: %s\n"%(key, self.styles[key]))
+        self.add_css("}")
+        
+        
+    
+    def build_js(self):
+        self.add_js("g.selectAll('.geom_point')")
+        self.add_js(".data(data)")
+        self.add_js(".enter()")
+        self.add_js(".append('svg:circle')")
+        self.add_js(".attr('cx',function(d) {return scales.%s_x(d.%s);})"%(self.x,self.x))
+        self.add_js(".attr('cy',function(d) {return scales.%s_y(d.%s);})"%(self.y,self.y))
+        self.add_js(".attr('r', 4 )")
+        self.add_js(".attr('class','geom_point')")
+        self.add_js(".attr('id','point_%s_%s_%s')"%(self.x,self.y,self.c))
+        if self.c:
+            self.add_css(".style('fill', function(d) {return d.%s;})"%self.c)
+
+    
