@@ -2,8 +2,8 @@ This is d3py. This branch (which is currently the master branch) was a proof of 
 
 This branch is en route to being phased out. Please check out the v2 branch to see what we're up to now. 
 
-There were two main problems with this branch. One was that the tornado server stuff was just too freaking heavy, and inspired a lot of confusing handlers. The second was that all the code was distributed all over the base class and the template html files. This meant that trying to figure out what was going on was hard, and it wasn't clear how to plot more than one thing over the top of each other was going to be stressful. 
+There were two main problems with this branch. One was that the tornado server stuff was just too freaking heavy, and inspired a lot of confusing handlers. The second was that all the code was distributed all over the base class and the template html files. This meant that trying to figure out what was going on was hard, and it wasn't clear how plotting more than one thing over the top of another was going to work. 
 
-The new version is much lighter, all the javascript is generated without any recourse to templates, and we have a much easier ggplot-esque set of idioms for building up the plots. We also make more use of css styles, rather than trying to re-invent that particular wheel, and we make heavy use of pandas, which will take over the world shortly. 
+The new version is much lighter, all the javascript is generated without any recourse to templates, and we have a much easier ggplot-esque set of idioms for building up the plots. We also make more use of css styles, rather than trying to re-invent that particular wheel, and we make heavy use of pandas, who will take over the world shortly. 
 
 The whole thing is much cleaner, though still has a long way to go before becoming usable. Please feel free to help out or suggest ideas! 
