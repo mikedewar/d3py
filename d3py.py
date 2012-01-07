@@ -4,22 +4,10 @@ import os
 import webbrowser
 import SimpleHTTPServer
 import SocketServer
-import subproceses
+import threading
 
-def serve(self):
-    """
-    start up a server to serve the files for this vis. 
-        
-    TODO NOTE THAT THIS SHOULD BE A SEPARATE PROCESS OH MY GOD!!! PLEASE SOMEONE FIX THIS IF POSS
-    """
-    PORT = 8000
-    Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
-    httpd = SocketServer.TCPServer(("", PORT), Handler)
-    print "you can find your chart at http://localhost:%s/%s/%s.html"%(PORT,self.name,self.name)
-    httpd.serve_forever()
-    "python -m SimpleHTTPServer 8000"
-
-
+class ThreadedHTTPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+    pass
 
 
 class D3object(object):
@@ -55,10 +43,16 @@ class Figure(D3object):
             your files will be stored.
         """
         # store data
-        self.data = data
         self.name = name
+        self.data = data
+        try:
+            os.mkdir("%s"%self.name)
+        except OSError:
+            pass
+        self.save_data()
         # port
         self.port = port
+        self.server_thread = None
         # initialise strings
         self.js = ""
         self.css = ""
@@ -73,6 +67,7 @@ class Figure(D3object):
         fh.close()
         self.html = self.html.replace("{{ port }}", str(port))
         self.html = self.html.replace("{{ name }}", name)
+        self.save_html()
         # build up the basic css
         self.add_css("#chart {width: %spx; height: %spx;}"%(width, height))
         # we make some structures that all the geoms can use
@@ -96,6 +91,8 @@ class Figure(D3object):
                 assert p in self.data, errmsg%(geom.name, p)
         self.js += geom.js
         self.css += geom.css
+        self.save_js()
+        self.save_css()
     
     def __add__(self, geom):
         self.add_geom(geom)
@@ -121,34 +118,56 @@ class Figure(D3object):
         """
         self.add_js("}")
     
-    def show(self):
-        # close javascript callback
-        self._close_js()
-        # make directory
-        try:
-            os.mkdir("%s"%self.name)
-        except OSError:
-            pass
+    def save(self):
+        self.save_data()
+        self.save_css()
+        self.save_js()
+        self.save_html()
+
+    def save_data(self):
         # write data
         fh = open("%s/%s.json"%(self.name, self.name), 'w')
         fh.write(self.data_to_json())
         fh.close()
+
+    def save_css(self):
         # write css
         fh = open("%s/%s.css"%(self.name, self.name), 'w')
         fh.write(self.css)
         fh.close()
+
+    def save_js(self):
         # write javascript
         fh = open("%s/%s.js"%(self.name, self.name), 'w')
-        fh.write(self.js)
+        fh.write(self.js + "}")
         fh.close()
+
+    def save_html(self):
         # write html
         fh = open("%s/%s.html"%(self.name,self.name),'w')
         fh.write(self.html)
         fh.close()
-        # start server
+
+    def show(self):
+        self.save()
         self.serve()
         # fire up a browser 
-        webbrowser.open_new_tab("d3py.html?show=%s"%name)
+        webbrowser.open_new_tab("http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name))
+
+    def serve(self):
+        """
+        start up a server to serve the files for this vis. 
+            
+        TODO NOTE THAT THIS SHOULD BE A SEPARATE PROCESS OH MY GOD!!! PLEASE SOMEONE FIX THIS IF POSS
+        """
+        if self.server_thread is None or self.server_thread.active_count() == 0:
+            Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+            #httpd = SocketServer.TCPServer(("", PORT), Handler)
+            httpd = ThreadedHTTPServer(("", self.port), Handler)
+            self.server_thread = threading.Thread(target=httpd.serve_forever)
+            self.server_thread.daemon = True
+            self.server_thread.start()
+        print "you can find your chart at http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name)
 
 if __name__ == "__main__":
     import numpy as np

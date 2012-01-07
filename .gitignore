@@ -1,0 +1,3 @@
+static/temp_*
+*.sw[pno]
+*.pyc
