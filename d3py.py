@@ -107,6 +107,14 @@ class Figure(D3object):
         # misc arguments
         self.args = {"width" : width, "height" : height, "margin" : margin}
         self.args.update(kwargs)
+
+    def set_data(self, data):
+        errmsg = "the %s geom requests %s which is not the given dataFrame!"
+        for geom in self.geoms:
+            for param in geom.params:
+                if param:
+                    assert p in data, errmsg%(geom.name, param)
+        self.update()
         
     def add_geom(self, geom):
         errmsg = "the %s geom requests %s which is not in our dataFrame!"

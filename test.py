@@ -11,6 +11,7 @@ df = pandas.DataFrame({
 })
 
 fig = d3py.Figure(df, name="basic_example2", width=300, height=300) 
-fig += geoms.Point(x="pressure", y="temp", fill="red")
+point = geoms.Point(x="pressure", y="temp", fill="red")
+fig += point
 fig.show()
 
