@@ -26,6 +26,7 @@ class Line(Geom):
         
     def build_js(self):
         # add the line
+        self.js = ""
         self.add_js("var line = d3.svg.line()")
         self.add_js(".x(function(d) { ")
         self.add_js("\t\t\treturn scales.%s_x(d.%s)"%(self.x,self.x))
@@ -41,6 +42,7 @@ class Line(Geom):
         
     def build_css(self):
         # default css
+        self.css = ""
         self.add_css(".geom_line {")
         self.add_css("stroke-width: 1px;")
         self.add_css("stroke: black;")
@@ -57,10 +59,12 @@ class Bar(Geom):
         Geom.__init__(self,**kwargs)
         self.x = x
         self.y = y
+        self.name = "bar"
         self.build_js()
         self.build_css()
     
     def build_js(self):
+        self.js = ""
         self.add_js("g.selectAll('.bars')")
         self.add_js(".data(data)")
         self.add_js(".enter()")
@@ -86,6 +90,7 @@ class Point(Geom):
         self.build_js()
     
     def build_css(self):
+        self.css = ""
         self.add_css(".geom_point {")
         self.add_css("stroke-width: 1px;")
         self.add_css("stroke: black;")
@@ -100,6 +105,7 @@ class Point(Geom):
         self.add_css("}")
         
     def build_js(self):
+        self.js = ""
         self.add_js("g.selectAll('.geom_point')")
         self.add_js(".data(data)")
         self.add_js(".enter()")

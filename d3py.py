@@ -2,13 +2,15 @@ import pandas
 import json
 import os
 import webbrowser
-import SimpleHTTPServer
+from HTTPHandler import CustomHTTPRequestHandler
 import SocketServer
 import threading
 
-class ThreadedHTTPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
-    pass
+import tempfile
+import shutil
 
+class ThreadedHTTPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+    allow_reuse_address = True
 
 class D3object(object):
     def add_js(self,s):
@@ -30,10 +32,53 @@ class D3object(object):
             self.css += "\t"
         self.css += s
         self.css += "\n"
+
+    def build_js():
+        raise NotImplementedError
+    def build_css():
+        raise NotImplementedError
+    def build_html():
+        raise NotImplementedError
+    def build_geoms():
+        raise NotImplementedError
+
+    def save_data(self, where=None):
+        raise NotImplementedError
+    def save_css(self, where=None):
+        raise NotImplementedError
+    def save_js(self, where=None):
+        raise NotImplementedError
+    def save_html(self, where=None):
+        raise NotImplementedError
+
+    def build(self):
+        self.build_js()
+        self.build_css()
+        self.build_html()
+        self.build_geoms()
+
+    def update(self, where=None):
+        self.build()
+        self.save(where)
+
+    def save(self, where=None):
+        if where is not None and not os.path.isdir(where):
+            try:
+                os.makedirs(where)
+            except Exception, e:
+                print "Could not create directory structure %s: %s"%(where,e)
+        self.save_data(where)
+        self.save_css(where)
+        self.save_js(where)
+        self.save_html(where)
+
+    def show(self):
+        self.update()
+        self.save()
     
 
 class Figure(D3object):
-    def __init__(self, data, name, width=400, height=100, margin=10, port=8000):
+    def __init__(self, data, name, width=400, height=100, margin=10, port=8000, template=None, **kwargs):
         """
         data : dataFrame
             data used for the plot. This dataFrame is column centric
@@ -45,55 +90,70 @@ class Figure(D3object):
         # store data
         self.name = name
         self.data = data
-        try:
-            os.mkdir("%s"%self.name)
-        except OSError:
-            pass
+        self.work_dir = tempfile.mkdtemp(prefix="d3py-%s"%self.name)
         self.save_data()
-        # port
-        self.port = port
+        # Networking stuff
+        self.port          = port
         self.server_thread = None
+        self.httpd         = None
         # initialise strings
-        self.js = ""
-        self.css = ""
-        # 
-        self.add_js("function draw(data){")
-        self.add_js("g = d3.select('#chart')")
-        self.add_js(".append('svg:svg')")
-        self.add_js(".append('svg:g');")
-        # we start the html using a template - it's pretty simple
-        fh = open('static/d3py_template.html')
-        self.html = fh.read()
-        fh.close()
-        self.html = self.html.replace("{{ port }}", str(port))
-        self.html = self.html.replace("{{ name }}", name)
-        self.save_html()
-        # build up the basic css
-        self.add_css("#chart {width: %spx; height: %spx;}"%(width, height))
-        # we make some structures that all the geoms can use
-        # we build the ranges up so that each column can be used as an x or y axis
-        # this is a bit hacky, but should suffice for now
-        self.add_js("var scales = {")
-        for colname in data.columns:
-            self.add_js("\t%s_y: d3.scale.linear()"%colname)
-            self.add_js(".domain([%s, %s])"%(max(data[colname]), min(data[colname])))
-            self.add_js(".range([%s, %s]),"%(margin, height-margin))
-            self.add_js("\t%s_x: d3.scale.linear()"%colname)
-            self.add_js(".domain([%s, %s])"%(min(data[colname]), max(data[colname])))
-            self.add_js(".range([%s, %s]),"%(margin, width-margin))
-        self.add_js("};")
+        self.js        = ""
+        self.css       = ""
+        self.html      = ""
+        self.template  = template or 'static/d3py_template.html'
+        self.js_geoms  = ""
+        self.css_geoms = ""
+        self.geoms     = []
+        # misc arguments
+        self.args = {"width" : width, "height" : height, "margin" : margin}
+        self.args.update(kwargs)
         
-    
     def add_geom(self, geom):
         errmsg = "the %s geom requests %s which is not in our dataFrame!"
         for p in geom.params:
             if p:
                 assert p in self.data, errmsg%(geom.name, p)
-        self.js += geom.js
-        self.css += geom.css
-        self.save_js()
-        self.save_css()
-    
+        self.geoms.append(geom)
+        self.save()
+
+    def build_js(self):
+        self.js = ""
+        self.add_js("function draw(data){")
+        self.add_js("g = d3.select('#chart')")
+        self.add_js(".append('svg:svg')")
+        self.add_js(".append('svg:g');")
+        self.add_js("var scales = {")
+        width, height, margin = self.args["width"], self.args["height"], self.args["margin"]
+        for colname in self.data.columns:
+            self.add_js("\t%s_y: d3.scale.linear()"%  colname                                          )
+            self.add_js(".domain([%s, %s])"        % (max(self.data[colname]), min(self.data[colname])))
+            self.add_js(".range([%s, %s]),"        % (margin, height-margin)                           )
+            self.add_js("\t%s_x: d3.scale.linear()"%  colname                                          )
+            self.add_js(".domain([%s, %s])"        % (min(self.data[colname]), max(self.data[colname])))
+            self.add_js(".range([%s, %s]),"        % (margin, width-margin)                            )
+        self.add_js("\t};")
+
+    def build_css(self):
+        # build up the basic css
+        self.css = ""
+        self.add_css("#chart {width: %spx; height: %spx;}"%(self.args["width"], self.args["height"]))
+
+    def build_html(self):
+        # we start the html using a template - it's pretty simple
+        self.html = open(self.template).read()
+        self.html = self.html.replace("{{ port }}", str(self.port))
+        self.html = self.html.replace("{{ name }}", self.name)
+        self.save_html()
+
+    def build_geoms(self):
+        self.js_geoms = ""
+        self.css_geoms = ""
+        for geom in self.geoms:
+            geom.build_js()
+            geom.build_css()
+            self.js_geoms += geom.js
+            self.css_geoms += geom.css
+
     def __add__(self, geom):
         self.add_geom(geom)
     
@@ -110,64 +170,78 @@ class Figure(D3object):
             for row in self.data.values
         ]
         return json.dumps(d)
-    
-    def _close_js(self):
-        """
-        closes the javascript. Used in show, but you might also want this
-        if you want to play with the callback
-        """
-        self.add_js("}")
-    
-    def save(self):
-        self.save_data()
-        self.save_css()
-        self.save_js()
-        self.save_html()
 
-    def save_data(self):
+    def save_data(self,where=None):
         # write data
-        fh = open("%s/%s.json"%(self.name, self.name), 'w')
+        fh = open("%s/%s.json"%(where or self.work_dir, self.name), 'w+')
         fh.write(self.data_to_json())
         fh.close()
 
-    def save_css(self):
+    def save_css(self, where=None):
         # write css
-        fh = open("%s/%s.css"%(self.name, self.name), 'w')
-        fh.write(self.css)
+        fh = open("%s/%s.css"%(where or self.work_dir, self.name), 'w+')
+        fh.write(self.css + "\n" + self.css_geoms)
         fh.close()
 
-    def save_js(self):
+    def save_js(self, where=None):
         # write javascript
-        fh = open("%s/%s.js"%(self.name, self.name), 'w')
-        fh.write(self.js + "}")
+        fh = open("%s/%s.js"%(where or self.work_dir, self.name), 'w+')
+        fh.write(self.js + "\n" + self.js_geoms + "}")
         fh.close()
 
-    def save_html(self):
+    def save_html(self, where=None):
         # write html
-        fh = open("%s/%s.html"%(self.name,self.name),'w')
+        fh = open("%s/%s.html"%(where or self.work_dir,self.name),'w+')
         fh.write(self.html)
         fh.close()
 
     def show(self):
-        self.save()
+        super(Figure, self).show()
         self.serve()
         # fire up a browser 
-        webbrowser.open_new_tab("http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name))
+        webbrowser.open_new_tab("http://localhost:%s/%s.html"%(self.port, self.name))
 
     def serve(self):
         """
         start up a server to serve the files for this vis. 
             
-        TODO NOTE THAT THIS SHOULD BE A SEPARATE PROCESS OH MY GOD!!! PLEASE SOMEONE FIX THIS IF POSS
         """
         if self.server_thread is None or self.server_thread.active_count() == 0:
-            Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+            Handler = CustomHTTPRequestHandler
+            Handler.directory = self.work_dir
             #httpd = SocketServer.TCPServer(("", PORT), Handler)
-            httpd = ThreadedHTTPServer(("", self.port), Handler)
-            self.server_thread = threading.Thread(target=httpd.serve_forever)
-            self.server_thread.daemon = True
-            self.server_thread.start()
-        print "you can find your chart at http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name)
+            port = self.port
+            started = False
+            while port < self.port + 50:
+                try:
+                    self.httpd = ThreadedHTTPServer(("", port), Handler)
+                    started = True
+                    break
+                except Exception, e:
+                    print "Exception %s: trying port %d"%(e,port)
+                    port += 1
+            if started is True:
+                self.port = port
+                self.server_thread = threading.Thread(target=self.httpd.serve_forever)
+                self.server_thread.daemon = True
+                self.server_thread.start()
+                print "you can find your chart at http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name)
+            else:
+                print "Could not open httpd server!"
+
+    def __del__(self):
+        try:
+            if self.httpd is not None:
+                print "Shutting down httpd"
+                self.httpd.shutdown()
+                self.httpd.server_close()
+            try:
+                print "Cleaning temp files"
+                shutil.rmtree(self.work_dir)
+            except:
+                pass
+        except Exception, e:
+            print "Error in clean-up: %s"%e
 
 if __name__ == "__main__":
     import numpy as np

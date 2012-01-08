@@ -10,7 +10,7 @@ df = pandas.DataFrame({
     "temp" : np.random.rand(T)
 })
 
-fig = d3py.Figure(df, name="basic_example", width=300, height=300) 
+fig = d3py.Figure(df, name="basic_example2", width=300, height=300) 
 fig += geoms.Point(x="pressure", y="temp", fill="red")
 fig.show()
 
