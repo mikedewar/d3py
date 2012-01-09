@@ -1,10 +1,12 @@
 import pandas
 import json
-import os
+from css import CSS
+
 import webbrowser
 from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
 import threading
 
+import os
 import tempfile
 import shutil
 
@@ -22,12 +24,6 @@ class D3object(object):
         self.js += "\n"
         if s.endswith(";"):
             self.js += "\n"
-    
-    def add_css(self,s):
-        if not (("{" in s) or ("}" in s)):
-            self.css += "\t"
-        self.css += s
-        self.css += "\n"
 
     def build_js():
         raise NotImplementedError
@@ -94,11 +90,11 @@ class Figure(D3object):
         self.httpd         = None
         # initialise strings
         self.js        = ""
-        self.css       = ""
+        self.css       = CSS()
         self.html      = ""
         self.template  = template or 'static/d3py_template.html'
         self.js_geoms  = ""
-        self.css_geoms = ""
+        self.css_geoms = CSS()
         self.geoms     = []
         # misc arguments
         self.args = {"width" : width, "height" : height, "margin" : margin}
@@ -139,8 +135,9 @@ class Figure(D3object):
 
     def build_css(self):
         # build up the basic css
-        self.css = ""
-        self.add_css("#chart {width: %spx; height: %spx; border: 1px solid; border-radius:5px; box-shadow: 10px 10px 5px #888888;}"%(self.args["width"], self.args["height"]))
+        chart = {"border" : "1px solid", "border-radius": "5px", "box-shadow": "10px 10px 5px #888888"}
+        chart.update(self.args)
+        self.css["#chart"] = chart
 
     def build_html(self):
         # we start the html using a template - it's pretty simple
@@ -151,7 +148,7 @@ class Figure(D3object):
 
     def build_geoms(self):
         self.js_geoms = ""
-        self.css_geoms = ""
+        self.css_geoms = CSS()
         for geom in self.geoms:
             geom.build_js()
             geom.build_css()
@@ -184,7 +181,7 @@ class Figure(D3object):
     def save_css(self, where=None):
         # write css
         fh = open("%s/%s.css"%(where or self.work_dir, self.name), 'w+')
-        fh.write(self.css + "\n" + self.css_geoms)
+        fh.write("%s\n%s"%(self.css, self.css_geoms))
         fh.close()
 
     def save_js(self, where=None):

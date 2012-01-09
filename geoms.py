@@ -1,10 +1,11 @@
 from d3py import D3object
+from css import CSS
 
 class Geom(D3object):
     def __init__(self, **kwargs):
         self.styles = kwargs
         self.js = ""
-        self.css = ""
+        self.css = CSS()
     
     def build_js(self):
         raise NotImplementedError
@@ -42,17 +43,10 @@ class Line(Geom):
         
     def build_css(self):
         # default css
-        self.css = ""
-        self.add_css(".geom_line {")
-        self.add_css("stroke-width: 1px;")
-        self.add_css("stroke: black;")
-        self.add_css("fill: none;")
-        self.add_css("}")
-        
-        self.add_css("#line_%s_%s {\n"%(self.x,self.y))
-        for key in self.styles:
-            self.add_css ("%s: %s\n"%(key, self.styles[key]))
-        self.add_css("}")
+        geom_line = {"stroke-width": "1px", "stroke": "black", "fill": None}
+        self.css[".geom_line"] = geom_line
+
+        self.css["#line_%s_%s"%(self.x,self.y)] = self.styles
 
 class Bar(Geom):
     def __init__(self,x,y,**kwargs):
@@ -90,19 +84,14 @@ class Point(Geom):
         self.build_js()
     
     def build_css(self):
-        self.css = ""
-        self.add_css(".geom_point {")
-        self.add_css("stroke-width: 1px;")
-        self.add_css("stroke: black;")
-        self.add_css("fill-opacity: 0.3;")
-        self.add_css("stroke-opacity: 1;")
-        self.add_css("fill: blue;")
-        self.add_css("}")
+        point = {"stroke-width"  : "1px",
+                 "stroke"        : "black",
+                 "fill-opacity"  : 0.3,
+                 "stroke-opacity": 1,
+                 "fill"          : "blue"}
+        self.css[".geom_point"] = point
         # arbitrary styles
-        self.add_css("#point_%s_%s_%s {\n"%(self.x,self.y,self.c))
-        for key in self.styles:
-            self.add_css ("%s: %s\n"%(key, self.styles[key]))
-        self.add_css("}")
+        self.css["#point_%s_%s_%s"%(self.x,self.y,self.c)] = self.styles
         
     def build_js(self):
         self.js = ""
