@@ -152,7 +152,7 @@ class Figure(D3object):
         for geom in self.geoms:
             geom.build_js()
             geom.build_css()
-            self.js_geoms += geom.js
+            self.js_geoms += str(geom.js)
             self.css_geoms += geom.css
 
     def __add__(self, geom):

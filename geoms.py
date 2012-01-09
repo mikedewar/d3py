@@ -1,5 +1,6 @@
 from d3py import D3object
 from css import CSS
+import javascript as JS
 
 class Geom(D3object):
     def __init__(self, **kwargs):
@@ -75,9 +76,11 @@ class Bar(Geom):
 class Point(Geom):
     def __init__(self,x,y,c=None,**kwargs):
         Geom.__init__(self, **kwargs)
+        self.js = JS.JavaScript()
         self.x = x
         self.y = y
         self.c = c
+        self._id = 'point_%s_%s_%s'%(self.x,self.y,self.c)
         self.params = [x,y,c]
         self.name = "point"
         self.build_css()
@@ -94,17 +97,36 @@ class Point(Geom):
         self.css["#point_%s_%s_%s"%(self.x,self.y,self.c)] = self.styles
         
     def build_js(self):
-        self.js = ""
-        self.add_js("g.selectAll('.geom_point')")
-        self.add_js(".data(data)")
-        self.add_js(".enter()")
-        self.add_js(".append('svg:circle')")
-        self.add_js(".attr('cx',function(d) {return scales.%s_x(d.%s);})"%(self.x,self.x))
-        self.add_js(".attr('cy',function(d) {return scales.%s_y(d.%s);})"%(self.y,self.y))
-        self.add_js(".attr('r', 4 )")
-        self.add_js(".attr('class','geom_point')")
-        self.add_js(".attr('id','point_%s_%s_%s')"%(self.x,self.y,self.c))
+        js_cx = JS.Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
+        js_cy = JS.Function(None, "d", "return scales.%s_y(d.%s);"%(self.y,self.y)) 
+        opts = [{"name": "selectAll", "param" : "'.geom_point'"             },
+                {"name": "data"     , "param" : "data"                      },
+                {"name": "enter"    , "param" : None                        },
+                {"name": "append"   , "param" : "'svg:circle'"              },
+                {"name": "attr"     , "param" : ("'cx'", js_cx)             },
+                {"name": "attr"     , "param" : ("'cy'", js_cy)             },
+                {"name": "attr"     , "param" : ("'r'", 4)                  },
+                {"name": "attr"     , "param" : ("'class'", "'geom_point'") },
+                {"name": "id"       , "param" : self._id                    }]
         if self.c:
-            self.add_css(".style('fill', function(d) {return d.%s;})"%self.c)
+            fill = JS.Function(None, "return d.%s;"%self.c)
+            opts.append({"name":"style", "param": ('fill', fill)})
+
+        obj = JS.Object("g", opts)
+        self.js = JS.JavaScript([obj, ])
+        
+
+        #self.js = ""
+        #self.add_js("g.selectAll('.geom_point')")
+        #self.add_js(".data(data)")
+        #self.add_js(".enter()")
+        #self.add_js(".append('svg:circle')")
+        #self.add_js(".attr('cx',function(d) {return scales.%s_x(d.%s);})"%(self.x,self.x))
+        #self.add_js(".attr('cy',function(d) {return scales.%s_y(d.%s);})"%(self.y,self.y))
+        #self.add_js(".attr('r', 4 )")
+        #self.add_js(".attr('class','geom_point')")
+        #self.add_js(".attr('id','point_%s_%s_%s')"%(self.x,self.y,self.c))
+        #if self.c:
+        #    self.add_css(".style('fill', function(d) {return d.%s;})"%self.c)
 
     
