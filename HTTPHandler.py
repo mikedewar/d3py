@@ -3,6 +3,10 @@ import SimpleHTTPServer
 import os
 import posixpath
 import urllib
+import SocketServer
+
+class ThreadedHTTPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+    allow_reuse_address = True
 
 class CustomHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 	def translate_path(self, path):

@@ -2,15 +2,11 @@ import pandas
 import json
 import os
 import webbrowser
-from HTTPHandler import CustomHTTPRequestHandler
-import SocketServer
+from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
 import threading
 
 import tempfile
 import shutil
-
-class ThreadedHTTPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
-    allow_reuse_address = True
 
 class D3object(object):
     def add_js(self,s):
@@ -144,7 +140,7 @@ class Figure(D3object):
     def build_css(self):
         # build up the basic css
         self.css = ""
-        self.add_css("#chart {width: %spx; height: %spx;}"%(self.args["width"], self.args["height"]))
+        self.add_css("#chart {width: %spx; height: %spx; border: 1px solid; border-radius:5px; box-shadow: 10px 10px 5px #888888;}"%(self.args["width"], self.args["height"]))
 
     def build_html(self):
         # we start the html using a template - it's pretty simple
