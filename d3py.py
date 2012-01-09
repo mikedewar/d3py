@@ -1,6 +1,7 @@
 import pandas
 import json
 from css import CSS
+import javascript as JS
 
 import webbrowser
 from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
@@ -11,27 +12,13 @@ import tempfile
 import shutil
 
 class D3object(object):
-    def add_js(self,s):
-        """
-        adds a line of javascript to the js object. Tries to do
-        some nice formatting
-        """
-        if not (s.startswith("function") or s.startswith("}")):
-            self.js += "\t"
-        if s.startswith('.'):
-            self.js += "\t"
-        self.js += s
-        self.js += "\n"
-        if s.endswith(";"):
-            self.js += "\n"
-
     def build_js():
         raise NotImplementedError
     def build_css():
         raise NotImplementedError
     def build_html():
         raise NotImplementedError
-    def build_geoms():
+    def bluild_geoms():
         raise NotImplementedError
 
     def save_data(self, where=None):
@@ -89,7 +76,7 @@ class Figure(D3object):
         self.server_thread = None
         self.httpd         = None
         # initialise strings
-        self.js        = ""
+        self.draw      = JS.Function("draw", "data", "")
         self.css       = CSS()
         self.html      = ""
         self.template  = template or 'static/d3py_template.html'
@@ -117,21 +104,25 @@ class Figure(D3object):
         self.save()
 
     def build_js(self):
-        self.js = ""
-        self.add_js("function draw(data){")
-        self.add_js("g = d3.select('#chart')")
-        self.add_js(".append('svg:svg')")
-        self.add_js(".append('svg:g');")
-        self.add_js("var scales = {")
+        draw_code = JS.JavaScript()
+        obj = JS.Object("d3").select("'#chart'") \
+                             .append("'svg:svg'") \
+                             .append("'svg:g'")
+        draw_code += "g = %s;"%obj
+
+        scale = {}
         width, height, margin = self.args["width"], self.args["height"], self.args["margin"]
         for colname in self.data.columns:
-            self.add_js("\t%s_y: d3.scale.linear()"%  colname                                          )
-            self.add_js(".domain([%s, %s])"        % (max(self.data[colname]), min(self.data[colname])))
-            self.add_js(".range([%s, %s]),"        % (margin, height-margin)                           )
-            self.add_js("\t%s_x: d3.scale.linear()"%  colname                                          )
-            self.add_js(".domain([%s, %s])"        % (min(self.data[colname]), max(self.data[colname])))
-            self.add_js(".range([%s, %s]),"        % (margin, width-margin)                            )
-        self.add_js("\t};")
+            y_range = JS.Object("d3.scale").add_attribute("linear") \
+                                           .add_attribute("domain", [max(self.data[colname]), min(self.data[colname])]) \
+                                           .add_attribute("range",  [margin, height-margin])
+            x_range = JS.Object("d3.scale").add_attribute("linear") \
+                                           .add_attribute("domain", [max(self.data[colname]), min(self.data[colname])]) \
+                                           .add_attribute("range",  [margin, width-margin])
+            scale.update({"%s_y"%colname : str(y_range), "%s_x"%colname : str(x_range)})
+        draw_code += "var scales = %s;"%json.dumps(scale).replace('"','')
+
+        self.draw = JS.Function("draw", ("data",), draw_code)
 
     def build_css(self):
         # build up the basic css
@@ -147,12 +138,12 @@ class Figure(D3object):
         self.save_html()
 
     def build_geoms(self):
-        self.js_geoms = ""
+        self.js_geoms = JS.JavaScript()
         self.css_geoms = CSS()
         for geom in self.geoms:
             geom.build_js()
             geom.build_css()
-            self.js_geoms += str(geom.js)
+            self.js_geoms += geom.js
             self.css_geoms += geom.css
 
     def __add__(self, geom):
@@ -187,7 +178,7 @@ class Figure(D3object):
     def save_js(self, where=None):
         # write javascript
         fh = open("%s/%s.js"%(where or self.work_dir, self.name), 'w+')
-        fh.write(self.js + "\n" + self.js_geoms + "}")
+        fh.write("%s"%(self.draw + self.js_geoms))
         fh.close()
 
     def save_html(self, where=None):

@@ -5,7 +5,7 @@ import javascript as JS
 class Geom(D3object):
     def __init__(self, **kwargs):
         self.styles = kwargs
-        self.js = ""
+        self.js = JS.JavaScript()
         self.css = CSS()
     
     def build_js(self):
@@ -28,19 +28,19 @@ class Line(Geom):
         
     def build_js(self):
         # add the line
-        self.js = ""
-        self.add_js("var line = d3.svg.line()")
-        self.add_js(".x(function(d) { ")
-        self.add_js("\t\t\treturn scales.%s_x(d.%s)"%(self.x,self.x))
-        self.add_js("\t\t})")
-        self.add_js(".y(function(d) { ")
-        self.add_js("\t\t\treturn scales.%s_y(d.%s)"%(self.y, self.y))
-        self.add_js("\t\t});")
-        # append the line to the g element
-        self.add_js("g.append('svg:path')")
-        self.add_js(".attr('d', line(data))")
-        self.add_js(".attr('class', 'geom_line')")
-        self.add_js(".attr('id', 'line_%s_%s');"%(self.x,self.y))
+        x_fxn = JS.Function(None, "d", "return scales.%s_x(d.%s)"%(self.x,self.x))
+        y_fxn = JS.Function(None, "d", "return scales.%s_y(d.%s)"%(self.y,self.y))
+
+        obj1 = JS.Object("d3.svg").add_attribute("line") \
+                                 .add_attribute("x", x_fxn) \
+                                 .add_attribute("y", y_fxn)
+
+        obj2 = JS.Object("g").append("'svg:path'") \
+                             .attr("'d'", "line(data)") \
+                             .attr("'class'", "'geom_line'") \
+                             .attr("'id'", "'line_%s_%s'"%(self.x, self.y))
+
+        self.js = JS.JavaScript(["var line = %s"%obj1, obj2])
         
     def build_css(self):
         # default css
@@ -59,24 +59,23 @@ class Bar(Geom):
         self.build_css()
     
     def build_js(self):
-        self.js = ""
-        self.add_js("g.selectAll('.bars')")
-        self.add_js(".data(data)")
-        self.add_js(".enter()")
-        self.add_js(".append('svg:rect')")
-        self.add_js(".attr('x',function(d) {return scales.%s_x(d.%s)} )"%(self.x,self.x))
-        self.add_js(".attr('y',function(d) {")
-        self.add_js("return d.%s_y > 0 ? scales.%s_y(d.%s) : scales.%s_y(0);"%(self.y, self.y, self.y, self.y))
-        self.add_js("})")
-        self.add_js(".attr('width', box_width )")
-        self.add_js(".attr('height',function(d) {")
-        self.add_js("return d.%s > 0 ? scales.%s_y(0) - scales.%s_y(d.%s) : scales.%s_y(d.%s) - scales.%s_y(0);"%(self.y, self.y, self.y, self.y, self.y, self.y, self.y))
-        self.add_js("})")
+        xfxn = JS.Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
+        yfxn = JS.Function(None, "d", "return return d.%s_y > 0 ? scales.%s_y(d.%s) : scales.%s_y(0);"%(self.y, self.y, self.y, self.y))
+        heightfxn = JS.Function(None, "d", "return d.%{y}s > 0 ? scales.%{y}s_y(0) - scales.%{y}s_y(d.%{y}s) : scales.%{y}s_y(d.%{y}s) - scales.%{y}s_y(0);"%{"y":self.y})
+
+        obj = JS.Object("g").selectAll("'.bars'") \
+                            .data("data") \
+                            .enter() \
+                            .append("'svg:rect'") \
+                            .attr("'x'", xfxn) \
+                            .attr("'y'", yfxn) \
+                            .attr("'width'", "box_width") \
+                            .attr("'height'", heightfxn)
+        self.js = JS.JavaScript([obj, ])
 
 class Point(Geom):
     def __init__(self,x,y,c=None,**kwargs):
         Geom.__init__(self, **kwargs)
-        self.js = JS.JavaScript()
         self.x = x
         self.y = y
         self.c = c
@@ -99,34 +98,17 @@ class Point(Geom):
     def build_js(self):
         js_cx = JS.Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
         js_cy = JS.Function(None, "d", "return scales.%s_y(d.%s);"%(self.y,self.y)) 
-        opts = [{"name": "selectAll", "param" : "'.geom_point'"             },
-                {"name": "data"     , "param" : "data"                      },
-                {"name": "enter"    , "param" : None                        },
-                {"name": "append"   , "param" : "'svg:circle'"              },
-                {"name": "attr"     , "param" : ("'cx'", js_cx)             },
-                {"name": "attr"     , "param" : ("'cy'", js_cy)             },
-                {"name": "attr"     , "param" : ("'r'", 4)                  },
-                {"name": "attr"     , "param" : ("'class'", "'geom_point'") },
-                {"name": "id"       , "param" : self._id                    }]
+
+        obj = JS.Object("g").selectAll("'.geom_point'")      \
+                            .data("data")                    \
+                            .enter()                         \
+                            .append("'svg:circle'")          \
+                            .attr("'cx'", js_cx)             \
+                            .attr("'cy'", js_cy)             \
+                            .attr("'r'", 4)                  \
+                            .attr("'class'", "'geom_point'") \
+                            .id(self._id)
         if self.c:
             fill = JS.Function(None, "return d.%s;"%self.c)
-            opts.append({"name":"style", "param": ('fill', fill)})
-
-        obj = JS.Object("g", opts)
+            obj.add_attribute("style", "fill", fill)
         self.js = JS.JavaScript([obj, ])
-        
-
-        #self.js = ""
-        #self.add_js("g.selectAll('.geom_point')")
-        #self.add_js(".data(data)")
-        #self.add_js(".enter()")
-        #self.add_js(".append('svg:circle')")
-        #self.add_js(".attr('cx',function(d) {return scales.%s_x(d.%s);})"%(self.x,self.x))
-        #self.add_js(".attr('cy',function(d) {return scales.%s_y(d.%s);})"%(self.y,self.y))
-        #self.add_js(".attr('r', 4 )")
-        #self.add_js(".attr('class','geom_point')")
-        #self.add_js(".attr('id','point_%s_%s_%s')"%(self.x,self.y,self.c))
-        #if self.c:
-        #    self.add_css(".style('fill', function(d) {return d.%s;})"%self.c)
-
-    
