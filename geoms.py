@@ -86,14 +86,16 @@ class Point(Geom):
         self.build_js()
     
     def build_css(self):
-        point = {"stroke-width"  : "1px",
-                 "stroke"        : "black",
-                 "fill-opacity"  : 0.3,
-                 "stroke-opacity": 1,
-                 "fill"          : "blue"}
-        self.css[".geom_point"] = point
+        point = {
+            "stroke-width"  : "1px",
+             "stroke"        : "black",
+             "fill-opacity"  : 0.7,
+             "stroke-opacity": 1,
+             "fill"          : "blue"
+        }
+        self.css[".geom_point"] = point 
         # arbitrary styles
-        self.css["#point_%s_%s_%s"%(self.x,self.y,self.c)] = self.styles
+        self.css["#"+self._id] = self.styles
         
     def build_js(self):
         js_cx = JS.Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
@@ -107,7 +109,7 @@ class Point(Geom):
                             .attr("'cy'", js_cy)             \
                             .attr("'r'", 4)                  \
                             .attr("'class'", "'geom_point'") \
-                            .id(self._id)
+                            .attr("'id'", "'%s'"%self._id)
         if self.c:
             fill = JS.Function(None, "return d.%s;"%self.c)
             obj.add_attribute("style", "fill", fill)
