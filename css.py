@@ -12,8 +12,11 @@ class CSS:
         A declaration-block consists of a list of declarations in braces.
         Each declaration itself consists of a property, a colon (:), a value.
     """
-    def __init__(self):
-        self.rules = {}
+    def __init__(self, css=None):
+        if css:
+            self.rules = css
+        else:
+            self.rules = {}
 
     def __getitem__(self, selector):
         "returns the dictionary of CSS declarations, given a selector"
@@ -29,9 +32,11 @@ class CSS:
 
     def __add__(self, css):
         if isinstance(css, dict):
-            for selector, declarations in css.iteritems():
-                assert(isinstance(declarations, dict))
-                self.rules[selector] = declarations
+            for selector, declarations in css.items():
+                try:
+                    self.rules[selector].update(declarations)
+                except KeyError:
+                    self.rules[selector] = declarations
             return self
         elif isinstance(css, CSS):
             return self.__add__(css.rules)
