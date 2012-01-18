@@ -13,10 +13,8 @@ class CSS:
         Each declaration itself consists of a property, a colon (:), a value.
     """
     def __init__(self, css=None):
-        if css:
-            self.rules = css
-        else:
-            self.rules = {}
+        self.rules = css or {}
+        assert isinstance(self.rules, dict)
 
     def __getitem__(self, selector):
         "returns the dictionary of CSS declarations, given a selector"
@@ -24,7 +22,7 @@ class CSS:
 
     def __setitem__(self, selector, declarations):
         "adds a dictionary of CSS declarations to the specified selector"
-        assert(isinstance(declarations, dict))
+        assert isinstance(declarations, dict)
         if selector in self.rules:
             self.rules[selector].update(declarations)
         else:
@@ -32,7 +30,7 @@ class CSS:
 
     def __add__(self, css):
         if isinstance(css, dict):
-            for selector, declarations in css.items():
+            for selector, declarations in css.iteritems():
                 try:
                     self.rules[selector].update(declarations)
                 except KeyError:

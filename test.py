@@ -6,6 +6,10 @@ class TestCSS(unittest.TestCase):
     def setUp(self):
         self.css = css.CSS()
     
+    def test_init(self):
+        out = css.CSS({"#test":{"fill":"red"}})
+        self.assertTrue(out["#test"] == {"fill":"red"})
+    
     def test_get(self):
         self.css["#test"] = {"fill":"red"}
         self.assertTrue(self.css["#test"] == {"fill":"red"})
