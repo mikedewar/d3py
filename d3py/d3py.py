@@ -1,5 +1,5 @@
 import pandas
-import json
+import ujson as json
 from css import CSS
 import javascript as JS
 import templates
@@ -12,22 +12,30 @@ import os
 import tempfile
 import shutil
 
+
 class D3object(object):
+
     def build_js():
         raise NotImplementedError
+
     def build_css():
         raise NotImplementedError
+
     def build_html():
         raise NotImplementedError
-    def bluild_geoms():
+
+    def build_geoms():
         raise NotImplementedError
 
     def save_data(self, where=None):
         raise NotImplementedError
+
     def save_css(self, where=None):
         raise NotImplementedError
+
     def save_js(self, where=None):
         raise NotImplementedError
+
     def save_html(self, where=None):
         raise NotImplementedError
 
@@ -46,7 +54,7 @@ class D3object(object):
             try:
                 os.makedirs(where)
             except Exception, e:
-                print "Could not create directory structure %s: %s"%(where,e)
+                print "Could not create directory structure %s: %s"%(where, e)
         self.save_data(where)
         self.save_css(where)
         self.save_js(where)
@@ -55,10 +63,12 @@ class D3object(object):
     def show(self):
         self.update()
         self.save()
-    
+
 
 class Figure(D3object):
-    def __init__(self, data, name, width=400, height=100, margin=10, port=8000, template=None, **kwargs):
+
+    def __init__(self, data, name, 
+        width=400, height=100, margin=10, port=8000, template=None, **kwargs):
         """
         data : dataFrame
             data used for the plot. This dataFrame is column centric
@@ -110,7 +120,6 @@ class Figure(D3object):
                              .append("'svg:svg'") \
                              .append("'svg:g'")
         draw_code += "g = %s;"%obj
-
         scale = {}
         width, height, margin = self.args["width"], self.args["height"], self.args["margin"]
         for colname in self.data.columns:
@@ -154,9 +163,12 @@ class Figure(D3object):
         return self
     
     def data_to_json(self):
+        """
+        converts the data frame stored in the figure to JSON
+        """
         d = [ 
             dict([
-                (colname, row[i]) 
+                (colname, cast(row[i])) 
                 for i,colname in enumerate(self.data.columns)
             ])
             for row in self.data.values

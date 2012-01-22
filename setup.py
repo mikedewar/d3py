@@ -1,4 +1,4 @@
-#!/usr/local/Cellar/python/2.7.2/bin/python
+#!/usr/bin/env python
 
 from distutils.core import setup
 

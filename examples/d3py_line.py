@@ -9,7 +9,7 @@ y = np.exp(-a*x) * np.sin(x)
 df = pandas.DataFrame({
     'x' : x,
     'y' : y
-    })
+})
 
 fig = d3py.Figure(df, 'd3py_line', width=600, height=200)
 fig += d3py.geoms.Line('x', 'y')
