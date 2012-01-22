@@ -168,7 +168,7 @@ class Figure(D3object):
         """
         d = [ 
             dict([
-                (colname, cast(row[i])) 
+                (colname, row[i])
                 for i,colname in enumerate(self.data.columns)
             ])
             for row in self.data.values

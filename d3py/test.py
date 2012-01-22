@@ -1,5 +1,7 @@
 import unittest
 import css
+import pandas
+import d3py
 
 class TestCSS(unittest.TestCase):
     
@@ -41,6 +43,17 @@ class TestCSS(unittest.TestCase):
         self.css["#test"] = {"fill":"red"}
         out = str(self.css)
         self.assertTrue(out == "#test {\n\tfill: red;\n}\n\n")
+
+class Test_d3py(unittest.TestCase):
+    def setUp(self):
+        self.df = pandas.DataFrame({
+            "count": [1,2,3],
+            "time": [1326825168, 1326825169, 1326825170]
+        })
+        
+    def test_data_to_json(self):
+        p = d3py.Figure(self.df)
+        j = p.data_to_json()
 
 if __name__ == '__main__':
     unittest.main()
