@@ -2,6 +2,7 @@ import pandas
 import json
 from css import CSS
 import javascript as JS
+import templates
 
 import webbrowser
 from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
@@ -132,8 +133,7 @@ class Figure(D3object):
 
     def build_html(self):
         # we start the html using a template - it's pretty simple
-        self.html = open(self.template).read()
-        self.html = self.html.replace("{{ port }}", str(self.port))
+        self.html = templates.d3py_template
         self.html = self.html.replace("{{ name }}", self.name)
         self.save_html()
 
@@ -182,14 +182,17 @@ class Figure(D3object):
         fh.close()
 
     def save_html(self, where=None):
+        # update the html with the correct port number
+        self.html = self.html.replace("{{ port }}", str(self.port))
         # write html
         fh = open("%s/%s.html"%(where or self.work_dir,self.name),'w+')
         fh.write(self.html)
         fh.close()
 
     def show(self):
-        super(Figure, self).show()
         self.serve()
+        super(Figure, self).show()
+
         # fire up a browser 
         webbrowser.open_new_tab("http://localhost:%s/%s.html"%(self.port, self.name))
 

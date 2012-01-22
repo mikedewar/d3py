@@ -1,3 +1,4 @@
 static/temp_*
+build/*
 *.sw[pno]
 *.pyc
