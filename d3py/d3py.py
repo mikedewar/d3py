@@ -139,9 +139,6 @@ class Figure(D3object):
     def build_css(self):
         # build up the basic css
         chart = {
-            "border": "1px solid",
-            "border-radius": "5px",
-            "box-shadow": "10px 10px 5px #888888"
         }
         chart.update(self.args)
         self.css["#chart"] = chart
