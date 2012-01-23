@@ -67,7 +67,7 @@ class D3object(object):
 
 class Figure(D3object):
 
-    def __init__(self, data, name, 
+    def __init__(self, data, name="figure",
         width=400, height=100, margin=10, port=8000, template=None, **kwargs):
         """
         data : dataFrame
@@ -83,19 +83,19 @@ class Figure(D3object):
         self.work_dir = tempfile.mkdtemp(prefix="d3py-%s"%self.name)
         self.save_data()
         # Networking stuff
-        self.port          = port
+        self.port = port
         self.server_thread = None
-        self.httpd         = None
+        self.httpd = None
         # initialise strings
-        self.draw      = JS.Function("draw", "data", "")
-        self.css       = CSS()
-        self.html      = ""
-        self.template  = template or 'static/d3py_template.html'
-        self.js_geoms  = ""
+        self.draw = JS.Function("draw", "data", "")
+        self.css = CSS()
+        self.html = ""
+        self.template = template or 'static/d3py_template.html'
+        self.js_geoms = ""
         self.css_geoms = CSS()
-        self.geoms     = []
+        self.geoms = []
         # misc arguments
-        self.args = {"width" : width, "height" : height, "margin" : margin}
+        self.args = {"width": width, "height": height, "margin": margin}
         self.args.update(kwargs)
 
     def set_data(self, data):
@@ -105,7 +105,7 @@ class Figure(D3object):
                 if param:
                     assert p in data, errmsg%(geom.name, param)
         self.update()
-        
+
     def add_geom(self, geom):
         errmsg = "the %s geom requests %s which is not in our dataFrame!"
         for p in geom.params:
@@ -121,7 +121,9 @@ class Figure(D3object):
                              .append("'svg:g'")
         draw_code += "g = %s;"%obj
         scale = {}
-        width, height, margin = self.args["width"], self.args["height"], self.args["margin"]
+        width = self.args["width"]
+        height = self.args["height"]
+        margin = self.args["margin"]
         for colname in self.data.columns:
             y_range = JS.Object("d3.scale").add_attribute("linear") \
                                            .add_attribute("domain", [max(self.data[colname]), min(self.data[colname])]) \
@@ -129,14 +131,18 @@ class Figure(D3object):
             x_range = JS.Object("d3.scale").add_attribute("linear") \
                                            .add_attribute("domain", [max(self.data[colname]), min(self.data[colname])]) \
                                            .add_attribute("range",  [margin, width-margin])
-            scale.update({"%s_y"%colname : str(y_range), "%s_x"%colname : str(x_range)})
-        draw_code += "var scales = %s;"%json.dumps(scale).replace('"','')
+            scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
+        draw_code += "var scales = %s;"%json.dumps(scale).replace('"', '')
 
-        self.draw = JS.Function("draw", ("data",), draw_code)
+        self.draw = JS.Function("draw", ("data", ), draw_code)
 
     def build_css(self):
         # build up the basic css
-        chart = {"border" : "1px solid", "border-radius": "5px", "box-shadow": "10px 10px 5px #888888"}
+        chart = {
+            "border": "1px solid",
+            "border-radius": "5px",
+            "box-shadow": "10px 10px 5px #888888"
+        }
         chart.update(self.args)
         self.css["#chart"] = chart
 
@@ -157,23 +163,29 @@ class Figure(D3object):
 
     def __add__(self, geom):
         self.add_geom(geom)
-    
+
     def __iadd__(self, geom):
         self.add_geom(geom)
         return self
-    
+
     def data_to_json(self):
         """
         converts the data frame stored in the figure to JSON
         """
-        d = [ 
+        d = [
             dict([
-                (colname, row[i])
+                (colname, float(row[i]))
                 for i,colname in enumerate(self.data.columns)
             ])
             for row in self.data.values
         ]
-        return json.dumps(d)
+        try:
+            s = json.dumps(d)
+        except OverflowError:
+            print d
+            print type(d)
+            raise
+        return s
 
     def save_data(self,where=None):
         # write data
@@ -205,13 +217,13 @@ class Figure(D3object):
         self.serve()
         super(Figure, self).show()
 
-        # fire up a browser 
+        # fire up a browser
         webbrowser.open_new_tab("http://localhost:%s/%s.html"%(self.port, self.name))
 
     def serve(self):
         """
-        start up a server to serve the files for this vis. 
-            
+        start up a server to serve the files for this vis.
+
         """
         if self.server_thread is None or self.server_thread.active_count() == 0:
             Handler = CustomHTTPRequestHandler
@@ -229,7 +241,9 @@ class Figure(D3object):
                     port += 1
             if started is True:
                 self.port = port
-                self.server_thread = threading.Thread(target=self.httpd.serve_forever)
+                self.server_thread = threading.Thread(
+                    target=self.httpd.serve_forever
+                )
                 self.server_thread.daemon = True
                 self.server_thread.start()
                 print "you can find your chart at http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name)
@@ -253,7 +267,7 @@ class Figure(D3object):
 if __name__ == "__main__":
     import numpy as np
     from geoms import *
-    
+
     # some test data
     T = 10
     df = pandas.DataFrame({
@@ -262,7 +276,8 @@ if __name__ == "__main__":
         "temp" : np.random.rand(T)
     })
     # draw, psuedo ggplot style
-    fig = Figure(df, name="random_temp", width=300, height=300) # instantiates the figure object
+    # instantiates the figure object
+    fig = Figure(df, name="random_temp", width=300, height=300) 
     #fig += Line(x="time", y="temp", stroke="red") # adds a red line
     fig += Point(x="pressure", y="temp", fill="red") # adds red points
 
