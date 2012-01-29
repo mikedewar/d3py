@@ -31,16 +31,16 @@ class Line(Geom):
         x_fxn = JS.Function(None, "d", "return scales.%s_x(d.%s)"%(self.x,self.x))
         y_fxn = JS.Function(None, "d", "return scales.%s_y(d.%s)"%(self.y,self.y))
 
-        obj1 = JS.Object("d3.svg").add_attribute("line") \
-                                 .add_attribute("x", x_fxn) \
-                                 .add_attribute("y", y_fxn)
+        self.js = JS.JavaScript()
+        self.js += "var line = " + JS.Object("d3.svg").add_attribute("line") \
+                                                      .add_attribute("x", x_fxn) \
+                                                      .add_attribute("y", y_fxn)
 
-        obj2 = JS.Object("g").append("'svg:path'") \
-                             .attr("'d'", "line(data)") \
-                             .attr("'class'", "'geom_line'") \
-                             .attr("'id'", "'line_%s_%s'"%(self.x, self.y))
-
-        self.js = JS.JavaScript(["var line = %s"%obj1, obj2])
+        self.js += JS.Object("g").append("'svg:path'") \
+                                 .attr("'d'", "line(data)") \
+                                 .attr("'class'", "'geom_line'") \
+                                 .attr("'id'", "'line_%s_%s'"%(self.x, self.y))
+        return self.js
         
     def build_css(self):
         # default css
@@ -48,6 +48,7 @@ class Line(Geom):
         self.css[".geom_line"] = geom_line
 
         self.css["#line_%s_%s"%(self.x,self.y)] = self.styles
+        return self.css
 
 class Bar(Geom):
     def __init__(self,x,y,**kwargs):
@@ -69,15 +70,17 @@ class Bar(Geom):
             "return d.%(y)s > 0 ? scales.%(y)s_y(0) - scales.%(y)s_y(d.%(y)s) : scales.%(y)s_y(d.%(y)s) - scales.%(y)s_y(0);"%{"y":self.y}
         )
         box_width=20
-        obj = JS.Object("g").selectAll("'.bars'") \
-                            .data("data") \
-                            .enter() \
-                            .append("'svg:rect'") \
-                            .attr("'x'", xfxn) \
-                            .attr("'y'", yfxn) \
-                            .attr("'width'", box_width)\
-                            .attr("'height'", heightfxn)
-        self.js = JS.JavaScript([obj, ])
+
+        self.js = JS.JavaScript()
+        self.js += JS.Object("g").selectAll("'.bars'") \
+                                 .data("data") \
+                                 .enter() \
+                                 .append("'svg:rect'") \
+                                 .attr("'x'", xfxn) \
+                                 .attr("'y'", yfxn) \
+                                 .attr("'width'", box_width)\
+                                 .attr("'height'", heightfxn)
+        return self.js
     
     def build_css(self):
         bar = {
@@ -90,6 +93,7 @@ class Bar(Geom):
         self.css[".geom_bar"] = bar 
         # arbitrary styles
         self.css["#"+self._id] = self.styles
+        return self.css
         
 
 class Point(Geom):
@@ -115,6 +119,7 @@ class Point(Geom):
         self.css[".geom_point"] = point 
         # arbitrary styles
         self.css["#"+self._id] = self.styles
+        return self.css
         
     def build_js(self):
         js_cx = JS.Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
@@ -132,4 +137,5 @@ class Point(Geom):
         if self.c:
             fill = JS.Function(None, "return d.%s;"%self.c)
             obj.add_attribute("style", "fill", fill)
-        self.js = JS.JavaScript([obj, ])
+        self.js = JS.JavaScript(obj)
+        return self.js
