@@ -5,21 +5,31 @@ class JavaScript:
     #       defined within the JavaScript object
     def __init__(self, statements=None):
         self.statements = []
+        self.objects_lookup = {}
         if statements is not None:
             statements = self._obj_to_statements(statements)
             if isinstance(statements, list):
                 self.statements = statements
+                self.objects_lookup = self.parse_objects()
             else:
                 raise Exception("Invalid inputed statement type")
 
-    def get_object(self, name):
-        return self.objects_lookup[name]
+    def get_object(self, name, objtype):
+        return self.objects_lookup[(name,type(objtype))]
 
     def __getitem__(self, item):
         return self.statements[item]
 
     def __setitem__(self, item, value):
         self.statements[item] = value
+
+    def parse_objects(self):
+        objects = {}
+        for item in self.statements:
+            if hasattr(item, "name") and item.name:
+                # Is it necissary to compound the key with the class type?
+                objects[ (item.name, type(item.__class__)) ] = item
+        return objects
 
     def _obj_to_statements(self, other):
         if isinstance(other, (Function, Object)):
@@ -30,11 +40,10 @@ class JavaScript:
             other = other.statements
         return other
 
-    def __iadd__(self, other):
+    def __radd__(self, other):
         other = self._obj_to_statements(other)
         if isinstance(other, list):
-            self.statements = self.statements + other
-            return self
+            return JavaScript(self.statements + other)
         raise NotImplementedError
 
 
@@ -43,6 +52,7 @@ class JavaScript:
         if isinstance(other, list):
             newobj = JavaScript()
             newobj.statements = self.statements + other
+            newobj.objects_lookup = newobj.parse_objects()
             return newobj
         raise NotImplementedError
 
@@ -110,13 +120,27 @@ class Function:
             code = [code, ]
         self.code = code
 
+    def _obj_to_statements(self, other):
+        if isinstance(other, str):
+            other = [other, ]
+        elif isinstance(other, JavaScript):
+            other = other.statements
+        elif isinstance(other, Function) and other.name == self.name and other.arugments == self.arguments:
+            other = other.code
+        else:
+            other = None
+        return other
+
     def __add__(self, more_code):
-        if isinstance(more_code, str):
-            more_code = [more_code, ]
-        elif isinstance(more_code, JavaScript):
-            more_code = more_code.statements
+        more_code = self._obj_to_statements(more_code)
         if isinstance(more_code, (list, tuple)):
             return Function(self.name, self.arguments, self.code + more_code)
+        raise NotImplementedError
+
+    def __radd__(self, more_code):
+        more_code = self._obj_to_statements(more_code)
+        if isinstance(more_code, (list, tuple)):
+            return Function(self.name, self.arguments, more_code + self.code)
         raise NotImplementedError
 
     def __repr__(self):
@@ -126,7 +150,7 @@ class Function:
         fxn = "function"
         if self.name is not None:
             fxn += " %s"%self.name
-        fxn += "(%s) {\n"%(",".join(self.arguments))
+        fxn += "(%s) {\n"%(",".join(self.arguments or ""))
         for line in self.code:
             fxn += "\t%s\n"%str(line)
         fxn += "}\n"
