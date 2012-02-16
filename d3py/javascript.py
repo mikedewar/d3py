@@ -113,12 +113,12 @@ class Object:
         return obj
 
 class Function:
-    def __init__(self, name, arguments, code):
+    def __init__(self, name, arguments, statements):
         self.name = name
         self.arguments = arguments
-        if isinstance(code, str):
-            code = [code, ]
-        self.code = code
+        if isinstance(statements, str):
+            statements = [statements, ]
+        self.statements = statements
 
     def _obj_to_statements(self, other):
         if isinstance(other, str):
@@ -126,21 +126,21 @@ class Function:
         elif isinstance(other, JavaScript):
             other = other.statements
         elif isinstance(other, Function) and other.name == self.name and other.arugments == self.arguments:
-            other = other.code
+            other = other.statements
         else:
             other = None
         return other
 
-    def __add__(self, more_code):
-        more_code = self._obj_to_statements(more_code)
-        if isinstance(more_code, (list, tuple)):
-            return Function(self.name, self.arguments, self.code + more_code)
+    def __add__(self, more_statements):
+        more_statements = self._obj_to_statements(more_statements)
+        if isinstance(more_statements, (list, tuple)):
+            return Function(self.name, self.arguments, self.statements + more_statements)
         raise NotImplementedError
 
-    def __radd__(self, more_code):
-        more_code = self._obj_to_statements(more_code)
-        if isinstance(more_code, (list, tuple)):
-            return Function(self.name, self.arguments, more_code + self.code)
+    def __radd__(self, more_statements):
+        more_statements = self._obj_to_statements(more_statements)
+        if isinstance(more_statements, (list, tuple)):
+            return Function(self.name, self.arguments, more_statements + self.statements)
         raise NotImplementedError
 
     def __repr__(self):
@@ -151,7 +151,7 @@ class Function:
         if self.name is not None:
             fxn += " %s"%self.name
         fxn += "(%s) {\n"%(",".join(self.arguments or ""))
-        for line in self.code:
+        for line in self.statements:
             fxn += "\t%s\n"%str(line)
         fxn += "}\n"
         return fxn
