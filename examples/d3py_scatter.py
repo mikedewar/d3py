@@ -1,6 +1,6 @@
 import numpy as np
-import d3py
 import pandas
+from d3py import d3py, geoms
 n = 400
 
 df = pandas.DataFrame({
@@ -8,6 +8,7 @@ df = pandas.DataFrame({
     'd2': np.random.normal(0, 1, n)
 })
 
+
 fig = d3py.Figure(df, "my_figure")
-fig += d3py.geoms.Point("d1", "d2", fill="red")
+fig += geoms.Point("d1", "d2", fill="red")
 fig.show()
