@@ -90,6 +90,7 @@ class Figure(D3object):
         self.port = port
         self.server_thread = None
         self.httpd = None
+        self.interactive = False
         # initialise strings
         self.draw = JS.Function("draw", "data", "")
         self.css = CSS()
@@ -101,6 +102,12 @@ class Figure(D3object):
         # misc arguments
         self.args = {"width": width, "height": height, "margin": margin}
         self.args.update(kwargs)
+
+    def ion(self):
+        """
+        Turns interactive mode on ala pylab
+        """
+        self.interactive = True
 
     def set_data(self, data):
         errmsg = "the %s geom requests %s which is not the given dataFrame!"
@@ -212,14 +219,22 @@ class Figure(D3object):
         fh.write(self.html)
         fh.close()
 
-    def show(self):
-        self.serve()
+    def show(self, interactive=None):
         super(Figure, self).show()
 
-        # fire up a browser
-        webbrowser.open_new_tab("http://localhost:%s/%s.html"%(self.port, self.name))
+        if interactive is not None:
+            blocking = not interactive
+        else:
+            blocking = not self.interactive
 
-    def serve(self):
+        if blocking:
+            self.serve(blocking=True)
+        else:
+            self.serve(blocking=False)
+            # fire up a browser
+            webbrowser.open_new_tab("http://localhost:%s/%s.html"%(self.port, self.name))
+
+    def serve(self, blocking=True):
         """
         start up a server to serve the files for this vis.
 
@@ -227,39 +242,33 @@ class Figure(D3object):
         if self.server_thread is None or self.server_thread.active_count() == 0:
             Handler = CustomHTTPRequestHandler
             Handler.directory = self.work_dir
-            #httpd = SocketServer.TCPServer(("", PORT), Handler)
-            port = self.port
-            started = False
-            while port < self.port + 50:
-                try:
-                    self.httpd = ThreadedHTTPServer(("", port), Handler)
-                    started = True
-                    break
-                except Exception, e:
-                    print "Exception %s: trying port %d"%(e,port)
-                    port += 1
-            if started is True:
-                self.port = port
+            try:
+                self.httpd = ThreadedHTTPServer(("", self.port), Handler)
+            except Exception, e:
+                print "Exception %s"%e
+                return False
+            if blocking:
+                self.server_thread = None
+                self.httpd.serve_forever()
+            else:
                 self.server_thread = threading.Thread(
                     target=self.httpd.serve_forever
                 )
                 self.server_thread.daemon = True
                 self.server_thread.start()
                 print "you can find your chart at http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name)
-            else:
-                print "Could not open httpd server!"
 
     def __del__(self):
         try:
-            if self.httpd is not None:
-                print "Shutting down httpd"
-                self.httpd.shutdown()
-                self.httpd.server_close()
             try:
                 print "Cleaning temp files"
                 shutil.rmtree(self.work_dir)
             except:
                 pass
+            if self.httpd is not None:
+                print "Shutting down httpd"
+                self.httpd.shutdown()
+                self.httpd.server_close()
         except Exception, e:
             print "Error in clean-up: %s"%e
 
