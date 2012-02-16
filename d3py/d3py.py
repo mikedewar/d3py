@@ -1,5 +1,4 @@
 import pandas
-import ujson as json
 from css import CSS
 import javascript as JS
 import templates
@@ -11,6 +10,11 @@ import threading
 import os
 import tempfile
 import shutil
+
+try:
+    import ujson as json
+except ImportError:
+    import json
 
 
 class D3object(object):
@@ -116,10 +120,9 @@ class Figure(D3object):
 
     def build_js(self):
         draw_code = JS.JavaScript()
-        obj = JS.Object("d3").select("'#chart'") \
-                             .append("'svg:svg'") \
-                             .append("'svg:g'")
-        draw_code += "g = %s;"%obj
+        draw_code += "g = " + JS.Object("d3").select("'#chart'") \
+                                             .append("'svg:svg'") \
+                                             .append("'svg:g'")
         scale = {}
         width = self.args["width"]
         height = self.args["height"]
@@ -153,10 +156,9 @@ class Figure(D3object):
         self.js_geoms = JS.JavaScript()
         self.css_geoms = CSS()
         for geom in self.geoms:
-            geom.build_js()
-            geom.build_css()
-            self.js_geoms += geom.js
-            self.css_geoms += geom.css
+            self.js_geoms += geom.build_js()
+            self.css_geoms += geom.build_css()
+        print self.js_geoms
 
     def __add__(self, geom):
         self.add_geom(geom)
