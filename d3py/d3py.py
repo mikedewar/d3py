@@ -12,7 +12,6 @@ import os
 import tempfile
 import shutil
 
-
 class D3object(object):
 
     def build_js():
@@ -172,9 +171,15 @@ class Figure(D3object):
         """
         converts the data frame stored in the figure to JSON
         """
+        def cast(a):
+            try:
+                return float(a)
+            except ValueError:
+                return a
+
         d = [
             dict([
-                (colname, float(row[i]))
+                (colname, cast(row[i]))
                 for i,colname in enumerate(self.data.columns)
             ])
             for row in self.data.values
@@ -187,11 +192,21 @@ class Figure(D3object):
             raise
         return s
 
-    def save_data(self,where=None):
+    def save_data(self,directory=None):
+        """
+        save a json representation of the figure's data frame
+        
+        Parameters
+        ==========
+        directory : str
+            specify a directory to store the data in (optional)
+        """
         # write data
-        fh = open("%s/%s.json"%(where or self.work_dir, self.name), 'w+')
+        fname = "%s/%s.json"%(directory or self.work_dir, self.name)
+        fh = open(fname, 'w+')
         fh.write(self.data_to_json())
         fh.close()
+        print "data written to %s"%fname
 
     def save_css(self, where=None):
         # write css
