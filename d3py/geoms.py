@@ -52,6 +52,15 @@ class Line(Geom):
 
 class Bar(Geom):
     def __init__(self,x,y,**kwargs):
+        """
+        This is a vertical bar chart - the height of each bar represents the 
+        magnitude of each class
+        
+        x : string
+            name of the column that contains the class labels
+        y : string
+            name of the column that contains the magnitude of each class
+        """
         Geom.__init__(self,**kwargs)
         self.x = x
         self.y = y
@@ -63,17 +72,18 @@ class Bar(Geom):
     
     def build_js(self):
         xfxn = JS.Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
+        
         yfxn = JS.Function(
-            None, 
-            "d", 
-            "return scales.%s_y(d.%s) : scales.%s_y(0);"%(self.y, self.y, self.y, self.y))
+            None,
+            "d",
+            "return scales.%(y)s_y(d.%(y)s)"%{"y":self.y}
+        )
         
         heightfxn = JS.Function(
             None, 
             "d", 
-            "return d.%(y)s > 0 ? scales.%(y)s_y(0) - scales.%(y)s_y(d.%(y)s) : scales.%(y)s_y(d.%(y)s) - scales.%(y)s_y(0);"%{"y":self.y}
+            "return height - margin - scales.%(y)s_y(d.%(y)s)"%{"y":self.y}
         )
-        box_width = 20
 
         self.js = JS.JavaScript()
         self.js += JS.Object("g").selectAll("'.bars'") \
@@ -82,7 +92,7 @@ class Bar(Geom):
             .append("'svg:rect'") \
             .attr("'x'", xfxn) \
             .attr("'y'", yfxn) \
-            .attr("'width'", box_width)\
+            .attr("'width'", "scales.%s_x.rangeBand()"%self.x)\
             .attr("'height'", heightfxn)
         return self.js
     

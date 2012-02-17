@@ -114,6 +114,22 @@ class Object:
 
 class Function:
     def __init__(self, name, arguments, statements):
+        """
+        name: string
+        
+        arguments: list of strings
+        
+        statements: list of strings
+        
+        This ends up as 
+        
+        function name(arg1, arg2, arg3){
+            statement1;
+            statement2;
+            statement3;
+        }
+        
+        """
         self.name = name
         self.arguments = arguments
         if isinstance(statements, str):

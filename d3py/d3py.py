@@ -14,10 +14,7 @@ import os
 import tempfile
 import shutil
 
-try:
-    import ujson as json
-except ImportError:
-    import json
+import json
 
 
 class D3object(object):
@@ -95,7 +92,10 @@ class Figure(D3object):
         self.httpd = None
         self.interactive = False
         # initialise strings
-        self.draw = JS.Function("draw", "data", "")
+        self.draw = JS.Function("draw", ["data"], "")
+        self.draw += "var width = %s"%width
+        self.draw += "    height = %s"%height
+        self.draw += "    margin = %s;"%margin
         self.css = CSS()
         self.html = ""
         self.template = template or 'static/d3py_template.html'
@@ -152,35 +152,38 @@ class Figure(D3object):
                     .add_attribute("ordinal") \
                     .add_attribute("domain", list(self.data[colname])) \
                     .add_attribute("range",  height_linspace)
+                    
                 x_range = JS.Object("d3.scale") \
                     .add_attribute("ordinal") \
                     .add_attribute("domain", list(self.data[colname])) \
-                    .add_attribute("range",  width_linspace)
+                    .add_attribute("rangeBands",  [margin, width-margin], 0.1)
+                    
                 scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
             else:
                 y_range = JS.Object("d3.scale") \
                     .add_attribute("linear") \
-                    .add_attribute("domain", [max(self.data[colname]), min(self.data[colname])]) \
+                    .add_attribute("domain", [max(self.data[colname]), 0]) \
                     .add_attribute("range",  [margin, height-margin])
+                    
                 x_range = JS.Object("d3.scale") \
                     .add_attribute("linear") \
                     .add_attribute("domain", [max(self.data[colname]), min(self.data[colname])]) \
                     .add_attribute("range",  [margin, width-margin])
+                    
                 scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
         return scale
         
 
     def build_js(self):
         draw_code = JS.JavaScript()
-        draw_code += "g = " + JS.Object("d3").select("'#chart'") \
+        draw_code += "var g = " + JS.Object("d3").select("'#chart'") \
                                              .append("'svg:svg'") \
                                              .append("'svg:g'")
-        
         scale = self.build_scales()
         
-        draw_code += "var scales = %s;"%json.dumps(scale).replace('"', '')
+        draw_code += "var scales = %s;"%json.dumps(scale, sort_keys=True, indent=4).replace('"', '')
 
-        self.draw = JS.Function("draw", ("data", ), draw_code)
+        self.draw += draw_code
 
     def build_css(self):
         # build up the basic css
@@ -228,7 +231,7 @@ class Figure(D3object):
             for row in self.data.values
         ]
         try:
-            s = json.dumps(d)
+            s = json.dumps(d, sort_keys=True, indent=4)
         except OverflowError:
             print d
             print type(d)
@@ -326,30 +329,11 @@ class Figure(D3object):
 
 if __name__ == "__main__":
     from geoms import *
-
-    if 0:
-        # some test data
-        T = 10
-        df = pandas.DataFrame({
-            "time" : range(T),
-            "pressure": np.random.rand(T),
-            "temp" : np.random.rand(T)
-        })
-        # draw, psuedo ggplot style
-        # instantiates the figure object
-        fig = Figure(df, name="random_temp", width=300, height=300) 
-        #fig += Line(x="time", y="temp", stroke="red") # adds a red line
-        fig += Point(x="pressure", y="temp", fill="red") # adds red points
-
-        fig1 = Figure(df, name="random_temp") # instantiates the figure object
-        fig1 += Bar(x="time", y="temp")
-        fig1.show() # writes 3 files, then draws some beautiful thing in Chrome
-
+    
     df = pandas.DataFrame({
         "count" : [1,4,7,3,2,9],
         "apple_type" : ["a", "b", "c", "d", "e", "f"]
     })
-
     p = Figure(df)
     p += Bar(x = "apple_type", y = "count")
     p.build_js()
