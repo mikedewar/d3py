@@ -8,6 +8,5 @@ df = pandas.DataFrame({
 })
 
 p = d3py.Figure(df)
-p += d3py.Bar(x="count", y="apple_type")
+p += d3py.Bar(x = "apple_type", y = "count")
 p.show()
-

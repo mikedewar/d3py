@@ -2,6 +2,9 @@ import pandas
 from css import CSS
 import javascript as JS
 import templates
+import numpy as np
+
+import logging
 
 import webbrowser
 from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
@@ -124,24 +127,57 @@ class Figure(D3object):
                 assert p in self.data, errmsg%(geom.name, p)
         self.geoms.append(geom)
         self.save()
+    
+    def build_scales(self):
+        """
+        create appropriate scales for each column of the data frame
+        """
+        # we take a slightly over the top approach to scales at the moment
+        scale = {}
+        width = self.args["width"]
+        height = self.args["height"]
+        margin = self.args["margin"]
+        for colname in self.data.columns:
+            # we test to see if the column contains strings or numbers
+            if type(self.data[colname][0]) is str:
+                logging.info("using ordinal scale for %s"%colname)
+                # if the column contains characters, build an ordinal scale
+                height_linspace = np.linspace(height-margin,margin,len(self.data[colname]))
+                height_linspace = [int(h) for h in height_linspace]
+                
+                width_linspace = np.linspace(margin, width-margin,len(self.data[colname]))
+                width_linspace = [int(w) for w in width_linspace]
+                
+                y_range = JS.Object("d3.scale") \
+                    .add_attribute("ordinal") \
+                    .add_attribute("domain", list(self.data[colname])) \
+                    .add_attribute("range",  height_linspace)
+                x_range = JS.Object("d3.scale") \
+                    .add_attribute("ordinal") \
+                    .add_attribute("domain", list(self.data[colname])) \
+                    .add_attribute("range",  width_linspace)
+                scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
+            else:
+                y_range = JS.Object("d3.scale") \
+                    .add_attribute("linear") \
+                    .add_attribute("domain", [max(self.data[colname]), min(self.data[colname])]) \
+                    .add_attribute("range",  [margin, height-margin])
+                x_range = JS.Object("d3.scale") \
+                    .add_attribute("linear") \
+                    .add_attribute("domain", [max(self.data[colname]), min(self.data[colname])]) \
+                    .add_attribute("range",  [margin, width-margin])
+                scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
+        return scale
+        
 
     def build_js(self):
         draw_code = JS.JavaScript()
         draw_code += "g = " + JS.Object("d3").select("'#chart'") \
                                              .append("'svg:svg'") \
                                              .append("'svg:g'")
-        scale = {}
-        width = self.args["width"]
-        height = self.args["height"]
-        margin = self.args["margin"]
-        for colname in self.data.columns:
-            y_range = JS.Object("d3.scale").add_attribute("linear") \
-                                           .add_attribute("domain", [max(self.data[colname]), min(self.data[colname])]) \
-                                           .add_attribute("range",  [margin, height-margin])
-            x_range = JS.Object("d3.scale").add_attribute("linear") \
-                                           .add_attribute("domain", [max(self.data[colname]), min(self.data[colname])]) \
-                                           .add_attribute("range",  [margin, width-margin])
-            scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
+        
+        scale = self.build_scales()
+        
         draw_code += "var scales = %s;"%json.dumps(scale).replace('"', '')
 
         self.draw = JS.Function("draw", ("data", ), draw_code)
@@ -289,22 +325,33 @@ class Figure(D3object):
             print "Error in clean-up: %s"%e
 
 if __name__ == "__main__":
-    import numpy as np
     from geoms import *
 
-    # some test data
-    T = 10
-    df = pandas.DataFrame({
-        "time" : range(T),
-        "pressure": np.random.rand(T),
-        "temp" : np.random.rand(T)
-    })
-    # draw, psuedo ggplot style
-    # instantiates the figure object
-    fig = Figure(df, name="random_temp", width=300, height=300) 
-    #fig += Line(x="time", y="temp", stroke="red") # adds a red line
-    fig += Point(x="pressure", y="temp", fill="red") # adds red points
+    if 0:
+        # some test data
+        T = 10
+        df = pandas.DataFrame({
+            "time" : range(T),
+            "pressure": np.random.rand(T),
+            "temp" : np.random.rand(T)
+        })
+        # draw, psuedo ggplot style
+        # instantiates the figure object
+        fig = Figure(df, name="random_temp", width=300, height=300) 
+        #fig += Line(x="time", y="temp", stroke="red") # adds a red line
+        fig += Point(x="pressure", y="temp", fill="red") # adds red points
 
-    fig1 = Figure(df, name="random_temp") # instantiates the figure object
-    fig1 += Bar(x="time", y="temp")
-    fig1.show() # writes 3 files, then draws some beautiful thing in Chrome
+        fig1 = Figure(df, name="random_temp") # instantiates the figure object
+        fig1 += Bar(x="time", y="temp")
+        fig1.show() # writes 3 files, then draws some beautiful thing in Chrome
+
+    df = pandas.DataFrame({
+        "count" : [1,4,7,3,2,9],
+        "apple_type" : ["a", "b", "c", "d", "e", "f"]
+    })
+
+    p = Figure(df)
+    p += Bar(x = "apple_type", y = "count")
+    p.build_js()
+    print p.draw
+    

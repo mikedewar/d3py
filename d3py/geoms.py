@@ -28,8 +28,8 @@ class Line(Geom):
         
     def build_js(self):
         # add the line
-        x_fxn = JS.Function(None, "d", "return scales.%s_x(d.%s)"%(self.x,self.x))
-        y_fxn = JS.Function(None, "d", "return scales.%s_y(d.%s)"%(self.y,self.y))
+        x_fxn = JS.Function(None, "d", "return scales.%s_x(d.%s)"%(self.x, self.x))
+        y_fxn = JS.Function(None, "d", "return scales.%s_y(d.%s)"%(self.y, self.y))
 
         self.js = JS.JavaScript()
         self.js += "var line = " + JS.Object("d3.svg").add_attribute("line") \
@@ -63,23 +63,27 @@ class Bar(Geom):
     
     def build_js(self):
         xfxn = JS.Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
-        yfxn = JS.Function(None, "d", "return d.%s_y > 0 ? scales.%s_y(d.%s) : scales.%s_y(0);"%(self.y, self.y, self.y, self.y))
+        yfxn = JS.Function(
+            None, 
+            "d", 
+            "return scales.%s_y(d.%s) : scales.%s_y(0);"%(self.y, self.y, self.y, self.y))
+        
         heightfxn = JS.Function(
             None, 
             "d", 
             "return d.%(y)s > 0 ? scales.%(y)s_y(0) - scales.%(y)s_y(d.%(y)s) : scales.%(y)s_y(d.%(y)s) - scales.%(y)s_y(0);"%{"y":self.y}
         )
-        box_width=20
+        box_width = 20
 
         self.js = JS.JavaScript()
         self.js += JS.Object("g").selectAll("'.bars'") \
-                                 .data("data") \
-                                 .enter() \
-                                 .append("'svg:rect'") \
-                                 .attr("'x'", xfxn) \
-                                 .attr("'y'", yfxn) \
-                                 .attr("'width'", box_width)\
-                                 .attr("'height'", heightfxn)
+            .data("data") \
+            .enter() \
+            .append("'svg:rect'") \
+            .attr("'x'", xfxn) \
+            .attr("'y'", yfxn) \
+            .attr("'width'", box_width)\
+            .attr("'height'", heightfxn)
         return self.js
     
     def build_css(self):

@@ -2,6 +2,8 @@ import unittest
 import css
 import pandas
 import d3py
+import javascript
+
 
 class TestCSS(unittest.TestCase):
     
@@ -54,6 +56,28 @@ class Test_d3py(unittest.TestCase):
     def test_data_to_json(self):
         p = d3py.Figure(self.df)
         j = p.data_to_json()
+
+class Test_JavaScript_object_lookup(unittest.TestCase):
+    def setUp(self):
+        self.g = javascript.Object("g").attr("color", "red")
+        self.j = javascript.JavaScript() + self.g
+        self.f = javascript.Function("test", None, "return 5")
+    
+    def test_getobject(self):
+        self.assertTrue(self.j.get_object("g", javascript.Object) == self.g)
+
+    def test_inplace_mod(self):
+        self.g.attr("test", "test")
+        self.assertTrue(self.j.get_object("g", javascript.Object) == self.g)
+
+    def test_add_fucntion(self):
+        self.j += self.f
+        self.assertTrue(self.j.get_object("test", javascript.Function) == self.f)
+
+    def test_prepend_function(self):
+        self.j += self.f
+        self.f = "console.debug('hello')" + self.f
+        self.assertTrue(self.j.get_object("test", javascript.Function) == self.f)
 
 if __name__ == '__main__':
     unittest.main()
