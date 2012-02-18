@@ -162,7 +162,7 @@ class Figure(D3object):
             else:
                 y_range = JS.Object("d3.scale") \
                     .add_attribute("linear") \
-                    .add_attribute("domain", [max(self.data[colname]), 0]) \
+                    .add_attribute("domain", [max(self.data[colname]), min(self.data[colname])]) \
                     .add_attribute("range",  [margin, height-margin])
                     
                 x_range = JS.Object("d3.scale") \
