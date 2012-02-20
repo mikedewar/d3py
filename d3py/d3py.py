@@ -63,9 +63,23 @@ class D3object(object):
         self.save_js(where)
         self.save_html(where)
 
+    def clanup(self):
+        raise NotImplementedError
+
     def show(self):
         self.update()
         self.save()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, ex_type, ex_value, ex_tb):
+        if ex_tb is not None:
+            print "Cleanup after exception: %s: %s"%(ex_type, ex_value)
+        self.cleanup()
+
+    def __del__(self):
+        self.cleanup()
 
 
 class Figure(D3object):
@@ -274,7 +288,6 @@ class Figure(D3object):
         fh = open(fname, 'w+')
         fh.write(self.data_to_json())
         fh.close()
-        print "Data written to %s"%fname
 
     def save_css(self, where=None):
         # write css
@@ -335,7 +348,7 @@ class Figure(D3object):
                 self.server_thread.start()
                 print "You can find your chart at http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name)
 
-    def __del__(self):
+    def cleanup(self):
         try:
             try:
                 print "Cleaning temp files"
