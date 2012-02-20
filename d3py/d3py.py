@@ -116,9 +116,7 @@ class Figure(D3object):
             "font-family": "'%s'; sans-serif"%self.font
         }
         kwargs = dict([(k[0].replace('_','-'), k[1]) for k in kwargs.items()])
-        
         self.args.update(kwargs)
-        print self.args
 
     def ion(self):
         """
@@ -230,7 +228,6 @@ class Figure(D3object):
         for geom in self.geoms:
             self.js_geoms += geom.build_js()
             self.css_geoms += geom.build_css()
-        print self.js_geoms
 
     def __add__(self, geom):
         self.add_geom(geom)
@@ -258,9 +255,8 @@ class Figure(D3object):
         ]
         try:
             s = json.dumps(d, sort_keys=True, indent=4)
-        except OverflowError:
-            print d
-            print type(d)
+        except OverflowError, e:
+            print "Error: Overflow on variable (type %s): %s: %s"%(type(d), d, e)
             raise
         return s
 
@@ -278,7 +274,7 @@ class Figure(D3object):
         fh = open(fname, 'w+')
         fh.write(self.data_to_json())
         fh.close()
-        print "data written to %s"%fname
+        print "Data written to %s"%fname
 
     def save_css(self, where=None):
         # write css
@@ -337,7 +333,7 @@ class Figure(D3object):
                 )
                 self.server_thread.daemon = True
                 self.server_thread.start()
-                print "you can find your chart at http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name)
+                print "You can find your chart at http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name)
 
     def __del__(self):
         try:
