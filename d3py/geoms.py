@@ -153,3 +153,34 @@ class Point(Geom):
             obj.add_attribute("style", "fill", fill)
         self.js = JS.JavaScript(obj)
         return self.js
+
+class xAxis(Geom):
+    def __init__(self,x, **kwargs):
+        """
+        x : string
+            name of the column you want to use to define the x-axis
+        """
+        Geom.__init__(self, **kwargs)
+        self.x = x
+        self.params = [x]
+        self._id = 'xaxis'
+        self.name = 'xaxis'
+        self.build_css()
+        self.build_js()
+    
+    def build_js(self):
+        scale = "scales.%s_x"%self.x
+        self.js = JS.JavaScript()
+        self.js += "xAxis = d3.svg.axis().scale(%s)"%scale
+        
+        xaxis_group = JS.Object("g").append('"g"') \
+              .attr('"class"','"x axis"') \
+              .attr('"transform"', '"translate(0," + height + ")"') \
+              .call("xAxis")
+        self.js += xaxis_group
+        return self.js
+    
+    def build_css(self):
+        return {}
+
+        

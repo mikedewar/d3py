@@ -69,7 +69,9 @@ class Object:
     def __init__(self, name):
         self.name = name
         self.opts = []
-
+    
+    # TODO maybe add_attribute should be add_method instead?
+    
     def add_attribute(self, name, *args):
         self.opts.append({"name":name, "param":",".join(str(x) for x in args)})
         return self
@@ -87,7 +89,10 @@ class Object:
     def attr(self, *args): 
         return self.add_attribute("attr", *args)
     def id(self, *args): 
+        # TODO what's this one for then?
         return self.add_attribute("id", *args)
+    def call(self, *args):
+        return self.add_attribute("call", *args)
 
     def __add__(self, other):
         if isinstance(other, str):

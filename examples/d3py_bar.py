@@ -9,4 +9,5 @@ df = pandas.DataFrame({
 
 p = d3py.Figure(df)
 p += d3py.Bar(x = "apple_type", y = "count")
+p += d3py.xAxis(x = "apple_type")
 p.show()
