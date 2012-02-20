@@ -69,6 +69,7 @@ class Bar(Geom):
         self.build_js()
         self.build_css()
         self.params = [x,y]
+        self.styles = dict([(k[0].replace('_','-'), k[1]) for k in kwargs.items()])
     
     def build_js(self):
         xfxn = JS.Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
@@ -82,14 +83,16 @@ class Bar(Geom):
         heightfxn = JS.Function(
             None, 
             "d", 
-            "return height - margin - scales.%(y)s_y(d.%(y)s)"%{"y":self.y}
+            "return height - scales.%(y)s_y(d.%(y)s)"%{"y":self.y}
         )
 
         self.js = JS.JavaScript()
         self.js += JS.Object("g").selectAll("'.bars'") \
             .data("data") \
             .enter() \
-            .append("'svg:rect'") \
+            .append("'rect'") \
+            .attr("'class'", "'geom_bar'") \
+            .attr("'id'", "'%s'"%self._id) \
             .attr("'x'", xfxn) \
             .attr("'y'", yfxn) \
             .attr("'width'", "scales.%s_x.rangeBand()"%self.x)\
@@ -104,6 +107,7 @@ class Bar(Geom):
              "stroke-opacity": 1,
              "fill": "blue"
         }
+        bar.update
         self.css[".geom_bar"] = bar 
         # arbitrary styles
         self.css["#"+self._id] = self.styles
@@ -174,13 +178,24 @@ class xAxis(Geom):
         self.js += "xAxis = d3.svg.axis().scale(%s)"%scale
         
         xaxis_group = JS.Object("g").append('"g"') \
-              .attr('"class"','"x axis"') \
+              .attr('"class"','"xaxis"') \
               .attr('"transform"', '"translate(0," + height + ")"') \
               .call("xAxis")
         self.js += xaxis_group
         return self.js
     
     def build_css(self):
-        return {}
+        axis_path = {
+            "fill" : "none",
+            "stroke" : "#000"
+        }
+        self.css[".xaxis path"] = axis_path
+        axis_path = {
+            "fill" : "none",
+            "stroke" : "#000"
+        }
+        self.css[".xaxis line"] = axis_path
+        
+        return self.css
 
         
