@@ -11,9 +11,8 @@ df = pandas.DataFrame({
     'y' : y
 })
 
-fig = d3py.Figure(df, 'd3py_line', width=600, height=200)
-fig += d3py.geoms.Line('x', 'y')
-fig += d3py.geoms.Point('x', 'y', fill='red')
-fig += d3py.xAxis('x')
-
-fig.show()
+with d3py.Figure(df, 'd3py_line', width=600, height=200) as fig:
+    fig += d3py.geoms.Line('x', 'y')
+    fig += d3py.geoms.Point('x', 'y', fill='red')
+    fig += d3py.xAxis('x')
+    fig.show()
