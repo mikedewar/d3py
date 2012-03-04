@@ -23,6 +23,8 @@ An example session could like:
 
 	import d3py
 	import pandas
+	import numpy as np
+	
 	# some test data
 	T = 100
 	# this is a data frame with three columns (we only use 2)
