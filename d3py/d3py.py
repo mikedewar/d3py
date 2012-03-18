@@ -10,14 +10,14 @@ from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
 import threading
 
 import os
-import tempfile
-import shutil
+from StringIO import StringIO
+import time
+
 
 import json
 
 
 class D3object(object):
-
     def build_js():
         raise NotImplementedError
 
@@ -30,16 +30,16 @@ class D3object(object):
     def build_geoms():
         raise NotImplementedError
 
-    def save_data(self, where=None):
+    def save_data(self):
         raise NotImplementedError
 
-    def save_css(self, where=None):
+    def save_css(self):
         raise NotImplementedError
 
-    def save_js(self, where=None):
+    def save_js(self):
         raise NotImplementedError
 
-    def save_html(self, where=None):
+    def save_html(self):
         raise NotImplementedError
 
     def build(self):
@@ -48,20 +48,15 @@ class D3object(object):
         self.build_html()
         self.build_geoms()
 
-    def update(self, where=None):
+    def update(self):
         self.build()
-        self.save(where)
+        self.save()
 
-    def save(self, where=None):
-        if where is not None and not os.path.isdir(where):
-            try:
-                os.makedirs(where)
-            except Exception, e:
-                print "Could not create directory structure %s: %s"%(where, e)
-        self.save_data(where)
-        self.save_css(where)
-        self.save_js(where)
-        self.save_html(where)
+    def save(self):
+        self.save_data()
+        self.save_css()
+        self.save_js()
+        self.save_html()
 
     def clanup(self):
         raise NotImplementedError
@@ -83,7 +78,6 @@ class D3object(object):
 
 
 class Figure(D3object):
-
     def __init__(self, data, name="figure",
         width=400, height=100, port=8000, template=None, font="Asap", **kwargs):
         """
@@ -101,7 +95,7 @@ class Figure(D3object):
         # store data
         self.name = name
         self.data = data
-        self.work_dir = tempfile.mkdtemp(prefix="d3py-%s"%self.name)
+        self.filemap = {"static/d3.js":{"fd":open("static/d3.js","r"), "timestamp":time.time()},}
         self.save_data()
         # Networking stuff
         self.port = port
@@ -284,30 +278,31 @@ class Figure(D3object):
             specify a directory to store the data in (optional)
         """
         # write data
-        fname = "%s/%s.json"%(directory or self.work_dir, self.name)
-        fh = open(fname, 'w+')
-        fh.write(self.data_to_json())
-        fh.close()
+        filename = "%s.json"%self.name
+        self.filemap[filename] = {"fd":StringIO(self.data_to_json()),
+                "timestamp":time.time()}
 
-    def save_css(self, where=None):
+    def save_css(self):
         # write css
-        fh = open("%s/%s.css"%(where or self.work_dir, self.name), 'w+')
-        fh.write("%s\n%s"%(self.css, self.css_geoms))
-        fh.close()
+        filename = "%s.css"%self.name
+        css = "%s\n%s"%(self.css, self.css_geoms)
+        self.filemap[filename] = {"fd":StringIO(css),
+                "timestamp":time.time()}
 
-    def save_js(self, where=None):
+    def save_js(self):
         # write javascript
-        fh = open("%s/%s.js"%(where or self.work_dir, self.name), 'w+')
-        fh.write("%s"%(self.draw + self.js_geoms))
-        fh.close()
+        filename = "%s.js"%self.name
+        js = "%s"%(self.draw + self.js_geoms)
+        self.filemap[filename] = {"fd":StringIO(js),
+                "timestamp":time.time()}
 
-    def save_html(self, where=None):
+    def save_html(self):
         # update the html with the correct port number
         self.html = self.html.replace("{{ port }}", str(self.port))
         # write html
-        fh = open("%s/%s.html"%(where or self.work_dir,self.name),'w+')
-        fh.write(self.html)
-        fh.close()
+        filename = "%s.html"%self.name
+        self.filemap[filename] = {"fd":StringIO(self.html),
+                "timestamp":time.time()}
 
     def show(self, interactive=None):
         super(Figure, self).show()
@@ -331,7 +326,7 @@ class Figure(D3object):
         """
         if self.server_thread is None or self.server_thread.active_count() == 0:
             Handler = CustomHTTPRequestHandler
-            Handler.directory = self.work_dir
+            Handler.filemap = self.filemap
             try:
                 self.httpd = ThreadedHTTPServer(("", self.port), Handler)
             except Exception, e:
@@ -350,11 +345,6 @@ class Figure(D3object):
 
     def cleanup(self):
         try:
-            try:
-                print "Cleaning temp files"
-                shutil.rmtree(self.work_dir)
-            except:
-                pass
             if self.httpd is not None:
                 print "Shutting down httpd"
                 self.httpd.shutdown()
