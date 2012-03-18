@@ -1,4 +1,4 @@
-from geom import Geom, JavaScript, Object
+from geom import Geom, JavaScript, Object, Function
 
 class xAxis(Geom):
     def __init__(self,x, **kwargs):
@@ -15,15 +15,17 @@ class xAxis(Geom):
         self.build_js()
     
     def build_js(self):
+        draw = Function("draw", ("data",), [])
         scale = "scales.%s_x"%self.x
-        self.js = JavaScript()
-        self.js += "xAxis = d3.svg.axis().scale(%s)"%scale
+        draw += "xAxis = d3.svg.axis().scale(%s)"%scale
         
         xaxis_group = Object("g").append('"g"') \
               .attr('"class"','"xaxis"') \
               .attr('"transform"', '"translate(0," + height + ")"') \
               .call("xAxis")
-        self.js += xaxis_group
+        draw += xaxis_group
+
+        self.js = JavaScript() + draw
         return self.js
     
     def build_css(self):

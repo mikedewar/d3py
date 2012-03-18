@@ -9,7 +9,6 @@ import webbrowser
 from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
 import threading
 
-import os
 from StringIO import StringIO
 import time
 
@@ -78,8 +77,8 @@ class D3object(object):
 
 
 class Figure(D3object):
-    def __init__(self, data, name="figure",
-        width=400, height=100, port=8000, template=None, font="Asap", **kwargs):
+    def __init__(self, data, name="figure", width=400, height=100, port=8000, 
+            template=None, font="Asap", logging=False, **kwargs):
         """
         data : dataFrame
             data used for the plot. This dataFrame is column centric
@@ -97,23 +96,23 @@ class Figure(D3object):
         self.data = data
         self.filemap = {"static/d3.js":{"fd":open("static/d3.js","r"), "timestamp":time.time()},}
         self.save_data()
+
         # Networking stuff
         self.port = port
         self.server_thread = None
         self.httpd = None
         self.interactive = False
+        self.logging = logging
+
         # initialise strings
-        self.draw = JS.Function("draw", ["data"], "")
+        self.js = JS.JavaScript()
+        self.margins = {"top": 10, "right": 20, "bottom": 25, "left": 60, "height":height, "width":width}
         
         # we use bostock's scheme http://bl.ocks.org/1624660
-        self.margins = {"top": 10, "right": 20, "bottom": 25, "left": 60}
-        self.draw += "var margin = %s;"%json.dumps(self.margins).replace('""','')
-        self.draw += "    width = %s - margin.left - margin.right"%width
-        self.draw += "    height = %s - margin.top - margin.bottom;"%height
         self.css = CSS()
         self.html = ""
         self.template = template or 'static/d3py_template.html'
-        self.js_geoms = ""
+        self.js_geoms = JS.JavaScript()
         self.css_geoms = CSS()
         self.geoms = []
         # misc arguments - these go into the css!
@@ -199,11 +198,12 @@ class Figure(D3object):
         
 
     def build_js(self):
-        draw_code = JS.JavaScript()
-        
+        draw = JS.Function("draw", ("data",))
+        draw += "var margin = %s;"%json.dumps(self.margins).replace('""','')
+        draw += "    width = %s - margin.left - margin.right"%self.margins["width"]
+        draw += "    height = %s - margin.top - margin.bottom;"%self.margins["height"]
         # this approach to laying out the graph is from Bostock: http://bl.ocks.org/1624660
-        
-        draw_code += "var g = " + JS.Object("d3").select("'#chart'") \
+        draw += "var g = " + JS.Object("d3").select("'#chart'") \
             .append("'svg'") \
             .attr("'width'", 'width + margin.left + margin.right') \
             .attr("'height'", 'height + margin.top + margin.bottom') \
@@ -211,10 +211,8 @@ class Figure(D3object):
             .attr("'transform'", "'translate(' + margin.left + ',' + margin.top + ')'")
         
         scale = self.build_scales()
-        
-        draw_code += "var scales = %s;"%json.dumps(scale, sort_keys=True, indent=4).replace('"', '')
-
-        self.draw += draw_code
+        draw += "var scales = %s;"%json.dumps(scale, sort_keys=True, indent=4).replace('"', '')
+        self.js = JS.JavaScript() + draw + JS.Function("init")
 
     def build_css(self):
         # build up the basic css
@@ -234,7 +232,7 @@ class Figure(D3object):
         self.js_geoms = JS.JavaScript()
         self.css_geoms = CSS()
         for geom in self.geoms:
-            self.js_geoms += geom.build_js()
+            self.js_geoms.merge(geom.build_js())
             self.css_geoms += geom.build_css()
 
     def __add__(self, geom):
@@ -291,8 +289,12 @@ class Figure(D3object):
 
     def save_js(self):
         # write javascript
+        final_js = JS.JavaScript()
+        final_js.merge(self.js)
+        final_js.merge(self.js_geoms)
+
         filename = "%s.js"%self.name
-        js = "%s"%(self.draw + self.js_geoms)
+        js = "%s"%final_js
         self.filemap[filename] = {"fd":StringIO(js),
                 "timestamp":time.time()}
 
@@ -327,6 +329,7 @@ class Figure(D3object):
         if self.server_thread is None or self.server_thread.active_count() == 0:
             Handler = CustomHTTPRequestHandler
             Handler.filemap = self.filemap
+            Handler.logging = self.logging
             try:
                 self.httpd = ThreadedHTTPServer(("", self.port), Handler)
             except Exception, e:

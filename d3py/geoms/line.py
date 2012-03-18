@@ -13,18 +13,21 @@ class Line(Geom):
         
     def build_js(self):
         # add the line
+        draw = Function("draw", ("data", ))
+
         x_fxn = Function(None, "d", "return scales.%s_x(d.%s)"%(self.x, self.x))
         y_fxn = Function(None, "d", "return scales.%s_y(d.%s)"%(self.y, self.y))
 
-        self.js = JavaScript()
-        self.js += "var line = " + Object("d3.svg").add_attribute("line") \
+        draw += "var line = " + Object("d3.svg").add_attribute("line") \
                                                       .add_attribute("x", x_fxn) \
                                                       .add_attribute("y", y_fxn)
 
-        self.js += Object("g").append("'svg:path'") \
+        draw += Object("g").append("'svg:path'") \
                                  .attr("'d'", "line(data)") \
                                  .attr("'class'", "'geom_line'") \
                                  .attr("'id'", "'line_%s_%s'"%(self.x, self.y))
+
+        self.js = JavaScript(draw)
         return self.js
         
     def build_css(self):

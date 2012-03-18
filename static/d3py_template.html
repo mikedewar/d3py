@@ -9,6 +9,7 @@
 <body>
 	<div id="chart"></div>
 	<script>
+        init();
 		d3.json("http://localhost:{{ port }}/{{ name }}.json", draw);
 	</script>
 </body>

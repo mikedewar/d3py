@@ -36,8 +36,8 @@ class Bar(Geom):
             "return height - scales.%(y)s_y(d.%(y)s)"%{"y":self.y}
         )
 
-        self.js = JavaScript()
-        self.js += Object("g").selectAll("'.bars'") \
+        draw = Function("draw", ("data",), [])
+        draw += Object("g").selectAll("'.bars'") \
             .data("data") \
             .enter() \
             .append("'rect'") \
@@ -47,6 +47,9 @@ class Bar(Geom):
             .attr("'y'", yfxn) \
             .attr("'width'", "scales.%s_x.rangeBand()"%self.x)\
             .attr("'height'", heightfxn)
+
+        self.js = JavaScript() + draw
+        self.js += (Function("init", autocall=True) + "console.debug('Hi');")
         return self.js
     
     def build_css(self):
