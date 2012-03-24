@@ -1,6 +1,5 @@
 from css import CSS
 import javascript as JS
-import templates
 import numpy as np
 
 import logging
@@ -9,7 +8,7 @@ import webbrowser
 from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
 import threading
 
-from StringIO import StringIO
+from cStringIO import StringIO
 import time
 
 
@@ -111,7 +110,7 @@ class Figure(D3object):
         # we use bostock's scheme http://bl.ocks.org/1624660
         self.css = CSS()
         self.html = ""
-        self.template = template or 'static/d3py_template.html'
+        self.template = template or "".join(open('static/d3py_template.html').readlines())
         self.js_geoms = JS.JavaScript()
         self.css_geoms = CSS()
         self.geoms = []
@@ -205,8 +204,8 @@ class Figure(D3object):
         # this approach to laying out the graph is from Bostock: http://bl.ocks.org/1624660
         draw += "var g = " + JS.Object("d3").select("'#chart'") \
             .append("'svg'") \
-            .attr("'width'", 'width + margin.left + margin.right') \
-            .attr("'height'", 'height + margin.top + margin.bottom') \
+            .attr("'width'", 'width + margin.left + margin.right + 25') \
+            .attr("'height'", 'height + margin.top + margin.bottom + 25') \
             .append("'g'") \
             .attr("'transform'", "'translate(' + margin.left + ',' + margin.top + ')'")
         
@@ -223,7 +222,7 @@ class Figure(D3object):
 
     def build_html(self):
         # we start the html using a template - it's pretty simple
-        self.html = templates.d3py_template
+        self.html = self.template
         self.html = self.html.replace("{{ name }}", self.name)
         self.html = self.html.replace("{{ font }}", self.font)
         self.save_html()

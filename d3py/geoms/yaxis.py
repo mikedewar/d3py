@@ -1,37 +1,35 @@
 from geom import Geom, JavaScript, Object, Function
 
-class xAxis(Geom):
-    def __init__(self,x, label=None, **kwargs):
+class yAxis(Geom):
+    def __init__(self,y, label=None, **kwargs):
         """
-        x : string
-            name of the column you want to use to define the x-axis
+        y : string
+            name of the column you want to use to define the y-axis
         """
         Geom.__init__(self, **kwargs)
-        self.x = x
+        self.y = y
         self.label = label
-        self.params = [x]
-        self._id = 'xaxis'
-        self.name = 'xaxis'
+        self.params = [y]
+        self._id = 'yaxis'
+        self.name = 'yaxis'
         self.build_css()
         self.build_js()
     
     def build_js(self):
         draw = Function("draw", ("data",), [])
-        scale = "scales.%s_x"%self.x
-        draw += "xAxis = d3.svg.axis().scale(%s)"%scale
+        scale = "scales.%s_y"%self.y
+        draw += "yAxis = d3.svg.axis().scale(%s).orient('left')"%scale
         
-        xaxis_group = Object("g").append('"g"') \
-              .attr('"class"','"xaxis"') \
-              .attr('"transform"', '"translate(0," + height + ")"') \
-              .call("xAxis")
-        draw += xaxis_group
+        yaxis_group = Object("g").append('"g"') \
+              .attr('"class"','"yaxis"') \
+              .call("yAxis")
+        draw += yaxis_group
 
         if self.label:
             # TODO: Have the transform on this label be less hacky
             label_group = Object("g").append('"text"') \
                     .add_attribute("text", '"%s"'%self.label) \
-                    .attr('"x"', "width/2") \
-                    .attr('"y"', "height+35")
+                    .attr('"transform"', '"translate(-" + (margin.left-20) + ", " + (height/2+20) + "), rotate(-90,0,0)"')
             draw += label_group
 
         self.js = JavaScript() + draw
@@ -42,11 +40,11 @@ class xAxis(Geom):
             "fill" : "none",
             "stroke" : "#000"
         }
-        self.css[".xaxis path"] = axis_path
+        self.css[".yaxis path"] = axis_path
         axis_path = {
             "fill" : "none",
             "stroke" : "#000"
         }
-        self.css[".xaxis line"] = axis_path
+        self.css[".yaxis line"] = axis_path
         
         return self.css

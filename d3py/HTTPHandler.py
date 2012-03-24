@@ -1,6 +1,6 @@
 import SimpleHTTPServer
 import SocketServer
-from StringIO import StringIO
+from cStringIO import StringIO
 import sys
 
 class ThreadedHTTPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
@@ -43,15 +43,11 @@ class CustomHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         f = None
         ctype = self.guess_type(path)
         try:
-            # Always read in binary mode. Opening files in text mode may cause
-            # newline translations, making the actual size of the content
-            # transmitted *less* than the content-length!
             f = self.filemap[path]["fd"]
         except KeyError:
             return self.list_directory()
         self.send_response(200)
         self.send_header("Content-type", ctype)
-        self.send_header("Content-Length", str(f.len))
         self.send_header("Last-Modified", self.date_time_string(self.filemap[path]["timestamp"]))
         self.end_headers()
         return f

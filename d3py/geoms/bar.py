@@ -47,6 +47,7 @@ class Bar(Geom):
             .attr("'y'", yfxn) \
             .attr("'width'", "scales.%s_x.rangeBand()"%self.x)\
             .attr("'height'", heightfxn)
+        # TODO: rangeBand above breaks for histogram type bar-plots... fix!
 
         self.js = JavaScript() + draw
         self.js += (Function("init", autocall=True) + "console.debug('Hi');")
