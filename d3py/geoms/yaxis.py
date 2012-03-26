@@ -29,7 +29,10 @@ class yAxis(Geom):
             # TODO: Have the transform on this label be less hacky
             label_group = Object("g").append('"text"') \
                     .add_attribute("text", '"%s"'%self.label) \
-                    .attr('"transform"', '"translate(-" + (margin.left-20) + ", " + (height/2+20) + "), rotate(-90,0,0)"')
+                    .attr('"y"', '- margin.left + 15') \
+                    .attr('"x"', '- height / 2.0') \
+                    .attr('"text-anchor"', '"middle"') \
+                    .attr('"transform"', '"rotate(-90, 0, 0)"')
             draw += label_group
 
         self.js = JavaScript() + draw

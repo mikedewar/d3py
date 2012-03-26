@@ -30,8 +30,9 @@ class xAxis(Geom):
             # TODO: Have the transform on this label be less hacky
             label_group = Object("g").append('"text"') \
                     .add_attribute("text", '"%s"'%self.label) \
+                    .attr('"text-anchor"', '"middle"') \
                     .attr('"x"', "width/2") \
-                    .attr('"y"', "height+35")
+                    .attr('"y"', "height+45")
             draw += label_group
 
         self.js = JavaScript() + draw
