@@ -26,6 +26,7 @@ class Point(Geom):
         return self.css
         
     def build_js(self):
+        draw = Function("draw", ("data",))
         js_cx = Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
         js_cy = Function(None, "d", "return scales.%s_y(d.%s);"%(self.y,self.y)) 
 
@@ -41,5 +42,7 @@ class Point(Geom):
         if self.c:
             fill = Function(None, "return d.%s;"%self.c)
             obj.add_attribute("style", "fill", fill)
-        self.js = JavaScript(obj)
+
+        draw += obj
+        self.js = JavaScript(draw)
         return self.js

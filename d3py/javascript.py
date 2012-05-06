@@ -14,8 +14,17 @@ class JavaScript:
             else:
                 raise Exception("Invalid inputed statement type")
 
+    def merge(self, other):
+        for line in other.statements:
+            if hasattr(line, "name") and (line.name, type(line.__class__)) in self.objects_lookup:
+                idx = self.objects_lookup[(line.name, type(line.__class__))][1]
+                self.statements[idx] += line
+            else:
+                self.statements.append(line)
+        self.objects_lookup = self.parse_objects()
+
     def get_object(self, name, objtype):
-        return self.objects_lookup[(name,type(objtype))]
+        return self.objects_lookup[(name,type(objtype))][0]
 
     def __getitem__(self, item):
         return self.statements[item]
@@ -25,10 +34,10 @@ class JavaScript:
 
     def parse_objects(self):
         objects = {}
-        for item in self.statements:
+        for i, item in enumerate(self.statements):
             if hasattr(item, "name") and item.name:
                 # Is it necissary to compound the key with the class type?
-                objects[ (item.name, type(item.__class__)) ] = item
+                objects[ (item.name, type(item.__class__)) ] = (item, i)
         return objects
 
     def _obj_to_statements(self, other):
@@ -118,7 +127,7 @@ class Object:
         return obj
 
 class Function:
-    def __init__(self, name, arguments, statements):
+    def __init__(self, name=None, arguments=None, statements=None, autocall=False):
         """
         name: string
         
@@ -139,15 +148,18 @@ class Function:
         self.arguments = arguments
         if isinstance(statements, str):
             statements = [statements, ]
-        self.statements = statements
+        self.statements = statements or []
+        self.autocall = autocall
 
     def _obj_to_statements(self, other):
         if isinstance(other, str):
             other = [other, ]
         elif isinstance(other, JavaScript):
             other = other.statements
-        elif isinstance(other, Function) and other.name == self.name and other.arugments == self.arguments:
+        elif isinstance(other, Function) and other.name == self.name and other.arguments == self.arguments:
             other = other.statements
+        elif isinstance(other, Object):
+            other = [other, ]
         else:
             other = None
         return other
@@ -155,13 +167,13 @@ class Function:
     def __add__(self, more_statements):
         more_statements = self._obj_to_statements(more_statements)
         if isinstance(more_statements, (list, tuple)):
-            return Function(self.name, self.arguments, self.statements + more_statements)
+            return Function(self.name, self.arguments, self.statements + more_statements, self.autocall)
         raise NotImplementedError
 
     def __radd__(self, more_statements):
         more_statements = self._obj_to_statements(more_statements)
         if isinstance(more_statements, (list, tuple)):
-            return Function(self.name, self.arguments, more_statements + self.statements)
+            return Function(self.name, self.arguments, more_statements + self.statements, self.autocall)
         raise NotImplementedError
 
     def __repr__(self):
@@ -175,4 +187,6 @@ class Function:
         for line in self.statements:
             fxn += "\t%s\n"%str(line)
         fxn += "}\n"
+        if self.autocall:
+            fxn += "%s(%s);\n"%(self.name, ",".join(self.arguments or ""))
         return fxn
