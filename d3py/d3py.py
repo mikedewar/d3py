@@ -100,7 +100,9 @@ class Figure(D3object):
         self.port = port
         self.server_thread = None
         self.httpd = None
-        self.interactive = False
+        # interactive is True by default as this is designed to be a command line tool
+        # we do not want to block interaction after plotting.
+        self.interactive = True
         self.logging = logging
 
         # initialise strings
@@ -316,6 +318,7 @@ class Figure(D3object):
         if blocking:
             self.serve(blocking=True)
         else:
+            # if not blocking, we serve the 
             self.serve(blocking=False)
             # fire up a browser
             webbrowser.open_new_tab("http://localhost:%s/%s.html"%(self.port, self.name))
@@ -343,7 +346,7 @@ class Figure(D3object):
                 )
                 self.server_thread.daemon = True
                 self.server_thread.start()
-                print "You can find your chart at http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name)
+            print "You can find your chart at http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name)
 
     def cleanup(self):
         try:
