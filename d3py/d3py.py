@@ -1,21 +1,16 @@
-from css import CSS
-import javascript as JS
-import numpy as np
-
 import logging
-
 import webbrowser
 from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
 import threading
-
 from cStringIO import StringIO
 import time
-
-
 import json
 
+from css import CSS
+import javascript as JS
 
 class D3object(object):
+    
     def build_js():
         raise NotImplementedError
 
@@ -41,16 +36,19 @@ class D3object(object):
         raise NotImplementedError
 
     def build(self):
+        logging.debug('building chart')
         self.build_js()
         self.build_css()
         self.build_html()
         self.build_geoms()
 
     def update(self):
+        logging.debug('updating chart')
         self.build()
         self.save()
 
     def save(self):
+        logging.debug('saving chart')
         self.save_data()
         self.save_css()
         self.save_js()
@@ -64,6 +62,7 @@ class D3object(object):
         self.save()
 
     def __enter__(self):
+        self.interactive = False
         return self
 
     def __exit__(self, ex_type, ex_value, ex_tb):
@@ -74,40 +73,37 @@ class D3object(object):
     def __del__(self):
         self.cleanup()
 
-
 class Figure(D3object):
-    def __init__(self, data, name="figure", width=400, height=100, port=8000, 
-            template=None, font="Asap", logging=False, **kwargs):
-        """
-        data : dataFrame
-            data used for the plot. This dataFrame is column centric
-        name : string
-            name of visualisation. This will appear in the title
-            bar of the webpage, and is the name of the folder where
-            your files will be stored.
-            
-        keyword args are converted from foo_bar to foo-bar if you want to pass
-        in arbitrary css to the figure    
-        
-        """
+    def __init__(self, name="figure", width=400, height=100, 
+        interactive=True, font="Asap", logging=False,  template=None,
+        port=8000, **kwargs):
         # store data
-        self.name = name
-        self.data = data
-        self.filemap = {"static/d3.js":{"fd":open("static/d3.js","r"), "timestamp":time.time()},}
-        self.save_data()
-
+        self.name = '_'.join(name.split())
+        self.filemap = {
+            "static/d3.js":{
+                "fd":open("static/d3.js","r"), 
+                "timestamp":time.time()
+            },
+        }
         # Networking stuff
         self.port = port
         self.server_thread = None
         self.httpd = None
         # interactive is True by default as this is designed to be a command line tool
         # we do not want to block interaction after plotting.
-        self.interactive = True
+        self.interactive = interactive
         self.logging = logging
 
         # initialise strings
         self.js = JS.JavaScript()
-        self.margins = {"top": 10, "right": 20, "bottom": 25, "left": 60, "height":height, "width":width}
+        self.margins = {
+            "top": 10, 
+            "right": 20, 
+            "bottom": 25, 
+            "left": 60, 
+            "height":height, 
+            "width":width
+        }
         
         # we use bostock's scheme http://bl.ocks.org/1624660
         self.css = CSS()
@@ -131,90 +127,20 @@ class Figure(D3object):
         Turns interactive mode on ala pylab
         """
         self.interactive = True
+    
+    def ioff(self):
+        """
+        Turns interactive mode off
+        """
+        self.interactive = False
 
-    def set_data(self, data):
-        errmsg = "the %s geom requests %s which is not the given dataFrame!"
-        for geom in self.geoms:
-            for param in geom.params:
-                if param:
-                    assert param in data, errmsg%(geom.name, param)
+    def set_data(self):
         self.update()
 
     def add_geom(self, geom):
-        errmsg = "the %s geom requests %s which is not in our dataFrame!"
-        for p in geom.params:
-            if p:
-                assert p in self.data, errmsg%(geom.name, p)
         self.geoms.append(geom)
         self.save()
     
-    def build_scales(self):
-        """
-        create appropriate scales for each column of the data frame
-        """
-        # we take a slightly over the top approach to scales at the moment
-        scale = {}
-        width = self.args["width"]
-        height = self.args["height"]
-        for colname in self.data.columns:
-            # we test to see if the column contains strings or numbers
-            if type(self.data[colname][0]) is str:
-                logging.info("using ordinal scale for %s"%colname)
-                # if the column contains characters, build an ordinal scale
-                height_linspace = np.linspace(height,0,len(self.data[colname]))
-                height_linspace = [int(h) for h in height_linspace]
-                
-                width_linspace = np.linspace(0, width,len(self.data[colname]))
-                width_linspace = [int(w) for w in width_linspace]
-                
-                y_range = JS.Object("d3.scale") \
-                    .add_attribute("ordinal") \
-                    .add_attribute("domain", list(self.data[colname])) \
-                    .add_attribute("range",  height_linspace)
-                    
-                x_range = JS.Object("d3.scale") \
-                    .add_attribute("ordinal") \
-                    .add_attribute("domain", list(self.data[colname])) \
-                    .add_attribute("rangeBands",  [0, width], 0.1)
-                    
-                scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
-            else:
-                y_range = JS.Object("d3.scale") \
-                    .add_attribute("linear") \
-                    .add_attribute("range",  [0, height])
-                    
-                x_range = JS.Object("d3.scale") \
-                    .add_attribute("linear")\
-                    .add_attribute("range",  [0, width])
-                
-                if min(self.data[colname]) < 0:
-                    x_range.add_attribute("domain", [min(self.data[colname]), max(self.data[colname])])
-                    y_range.add_attribute("domain", [max(self.data[colname]), min(self.data[colname])])
-                else:
-                    x_range.add_attribute("domain", [0, max(self.data[colname])])
-                    y_range.add_attribute("domain", [max(self.data[colname]), 0])
-                    
-                scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
-        return scale
-        
-
-    def build_js(self):
-        draw = JS.Function("draw", ("data",))
-        draw += "var margin = %s;"%json.dumps(self.margins).replace('""','')
-        draw += "    width = %s - margin.left - margin.right"%self.margins["width"]
-        draw += "    height = %s - margin.top - margin.bottom;"%self.margins["height"]
-        # this approach to laying out the graph is from Bostock: http://bl.ocks.org/1624660
-        draw += "var g = " + JS.Object("d3").select("'#chart'") \
-            .append("'svg'") \
-            .attr("'width'", 'width + margin.left + margin.right + 25') \
-            .attr("'height'", 'height + margin.top + margin.bottom + 25') \
-            .append("'g'") \
-            .attr("'transform'", "'translate(' + margin.left + ',' + margin.top + ')'")
-        
-        scale = self.build_scales()
-        draw += "var scales = %s;"%json.dumps(scale, sort_keys=True, indent=4).replace('"', '')
-        self.js = JS.JavaScript() + draw + JS.Function("init")
-
     def build_css(self):
         # build up the basic css
         chart = {
@@ -244,28 +170,22 @@ class Figure(D3object):
         return self
 
     def data_to_json(self):
-        """
-        converts the data frame stored in the figure to JSON
-        """
-        def cast(a):
-            try:
-                return float(a)
-            except ValueError:
-                return a
+        raise NotImplementedError
+        
+    def build_js(self):
+        draw = JS.Function("draw", ("data",))
+        draw += "var margin = %s;"%json.dumps(self.margins).replace('""','')
+        draw += "    width = %s - margin.left - margin.right"%self.margins["width"]
+        draw += "    height = %s - margin.top - margin.bottom;"%self.margins["height"]
+        # this approach to laying out the graph is from Bostock: http://bl.ocks.org/1624660
+        draw += "var g = " + JS.Object("d3").select("'#chart'") \
+            .append("'svg'") \
+            .attr("'width'", 'width + margin.left + margin.right + 25') \
+            .attr("'height'", 'height + margin.top + margin.bottom + 25') \
+            .append("'g'") \
+            .attr("'transform'", "'translate(' + margin.left + ',' + margin.top + ')'")
 
-        d = [
-            dict([
-                (colname, cast(row[i]))
-                for i,colname in enumerate(self.data.columns)
-            ])
-            for row in self.data.values
-        ]
-        try:
-            s = json.dumps(d, sort_keys=True, indent=4)
-        except OverflowError, e:
-            print "Error: Overflow on variable (type %s): %s: %s"%(type(d), d, e)
-            raise
-        return s
+        self.js = JS.JavaScript() + draw + JS.Function("init")
 
     def save_data(self,directory=None):
         """
@@ -328,6 +248,8 @@ class Figure(D3object):
         start up a server to serve the files for this vis.
 
         """
+        msgparams = (self.port, self.name)
+        url = "http://localhost:%s/%s.html"%msgparams
         if self.server_thread is None or self.server_thread.active_count() == 0:
             Handler = CustomHTTPRequestHandler
             Handler.filemap = self.filemap
@@ -338,15 +260,22 @@ class Figure(D3object):
                 print "Exception %s"%e
                 return False
             if blocking:
+                logging.info('serving forever on port: %s'%msgparams[0])
+                msg = "You can find your chart at " + url
+                print msg
+                print "Ctrl-C to stop serving the chart and quit!"
                 self.server_thread = None
                 self.httpd.serve_forever()
             else:
+                logging.info('serving asynchronously on port %s'%msgparams[0])
                 self.server_thread = threading.Thread(
                     target=self.httpd.serve_forever
                 )
                 self.server_thread.daemon = True
                 self.server_thread.start()
-            print "You can find your chart at http://localhost:%s/%s/%s.html"%(self.port, self.name, self.name)
+                msg = "You can find your chart at " + url
+                print msg
+
 
     def cleanup(self):
         try:
@@ -356,3 +285,6 @@ class Figure(D3object):
                 self.httpd.server_close()
         except Exception, e:
             print "Error in clean-up: %s"%e
+
+
+

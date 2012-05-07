@@ -1,3 +1,6 @@
+#### TODO this will break - we should build a dedicated histogram geom to match 
+#### up with d3's histogram layout
+
 import pandas
 import d3py
 import numpy as np
