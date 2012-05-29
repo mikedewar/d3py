@@ -41,7 +41,7 @@ class JavaScript:
         return objects
 
     def _obj_to_statements(self, other):
-        if isinstance(other, (Function, Object)):
+        if isinstance(other, (Function, Selection)):
             other = [other, ]
         elif isinstance(other, str):
             other = [other, ]
@@ -54,7 +54,6 @@ class JavaScript:
         if isinstance(other, list):
             return JavaScript(self.statements + other)
         raise NotImplementedError
-
 
     def __add__(self, other):
         other = self._obj_to_statements(other)
@@ -74,7 +73,7 @@ class JavaScript:
             js += str(statement) + "\n"
         return js
 
-class Object:
+class Selection:
     def __init__(self, name):
         self.name = name
         self.opts = []
@@ -97,6 +96,8 @@ class Object:
         return self.add_attribute("append", *args)
     def attr(self, *args): 
         return self.add_attribute("attr", *args)
+    def style(self, *args): 
+        return self.add_attribute("style", *args)
     def id(self, *args): 
         # TODO what's this one for then?
         return self.add_attribute("id", *args)
@@ -158,7 +159,7 @@ class Function:
             other = other.statements
         elif isinstance(other, Function) and other.name == self.name and other.arguments == self.arguments:
             other = other.statements
-        elif isinstance(other, Object):
+        elif isinstance(other, Selection):
             other = [other, ]
         else:
             other = None

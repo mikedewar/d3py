@@ -3,13 +3,13 @@
 from d3py import javascript as JS
 
 def test_JavaScript_object_lookup():
-    g = JS.Object("g").attr("color", "red")
+    g = JS.Selection("g").attr("color", "red")
     j = JS.JavaScript() + g
 
-    assert(j.get_object("g", JS.Object) == g)
+    assert(j.get_object("g", JS.Selection) == g)
 
     g.attr("test", "test")
-    assert(j.get_object("g", JS.Object) == g)
+    assert(j.get_object("g", JS.Selection) == g)
 
     f = JS.Function("test", None, "return 5")
     j += f

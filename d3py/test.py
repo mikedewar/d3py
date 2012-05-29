@@ -59,16 +59,16 @@ class Test_d3py(unittest.TestCase):
 
 class Test_JavaScript_object_lookup(unittest.TestCase):
     def setUp(self):
-        self.g = javascript.Object("g").attr("color", "red")
+        self.g = javascript.Selection("g").attr("color", "red")
         self.j = javascript.JavaScript() + self.g
         self.f = javascript.Function("test", None, "return 5")
     
     def test_getobject(self):
-        self.assertTrue(self.j.get_object("g", javascript.Object) == self.g)
+        self.assertTrue(self.j.get_object("g", javascript.Selection) == self.g)
 
     def test_inplace_mod(self):
         self.g.attr("test", "test")
-        self.assertTrue(self.j.get_object("g", javascript.Object) == self.g)
+        self.assertTrue(self.j.get_object("g", javascript.Selection) == self.g)
 
     def test_add_fucntion(self):
         self.j += self.f

@@ -14,7 +14,7 @@ d3 = {version: "2.8.1"}; // semver
 function d3_class(ctor, properties) {
   try {
     for (var key in properties) {
-      Object.defineProperty(ctor.prototype, key, {
+      Selection.defineProperty(ctor.prototype, key, {
         value: properties[key],
         enumerable: false
       });
@@ -1098,7 +1098,7 @@ d3.interpolateArray = function(a, b) {
   };
 };
 
-d3.interpolateObject = function(a, b) {
+d3.interpolateSelection = function(a, b) {
   var i = {},
       c = {},
       k;
@@ -1129,7 +1129,7 @@ function d3_interpolateByName(n) {
 }
 
 d3.interpolators = [
-  d3.interpolateObject,
+  d3.interpolateSelection,
   function(a, b) { return (b instanceof Array) && d3.interpolateArray(a, b); },
   function(a, b) { return (typeof a === "string" || typeof b === "string") && d3.interpolateString(a + "", b + ""); },
   function(a, b) { return (typeof b === "string" ? d3_rgb_names.has(b) || /^(#|rgb\(|hsl\()/.test(b) : b instanceof d3_Rgb || b instanceof d3_Hsl) && d3.interpolateRgb(a, b); },
@@ -3276,7 +3276,7 @@ function d3_svg_line(projection) {
 }
 
 d3.svg.line = function() {
-  return d3_svg_line(Object);
+  return d3_svg_line(Selection);
 };
 
 // Converts the specified array of data into an array of points
@@ -3752,7 +3752,7 @@ d3_svg_lineStepBefore.reverse = d3_svg_lineStepAfter;
 d3_svg_lineStepAfter.reverse = d3_svg_lineStepBefore;
 
 d3.svg.area = function() {
-  return d3_svg_area(Object);
+  return d3_svg_area(Selection);
 };
 
 function d3_svg_areaX(points) {
@@ -5366,7 +5366,7 @@ d3.layout.force = function() {
   // use `node.call(force.drag)` to make nodes draggable
   force.drag = function() {
     if (!drag) drag = d3.behavior.drag()
-        .origin(Object)
+        .origin(Selection)
         .on("dragstart", dragstart)
         .on("drag", d3_layout_forceDrag)
         .on("dragend", d3_layout_forceDragEnd);
@@ -5589,7 +5589,7 @@ d3.layout.pie = function() {
 var d3_layout_pieSortByValue = {};
 // data is two-dimensional array of x,y; we populate y0
 d3.layout.stack = function() {
-  var values = Object,
+  var values = Selection,
       order = d3_layout_stackOrderDefault,
       offset = d3_layout_stackOffsetZero,
       out = d3_layout_stackOut,
@@ -7585,7 +7585,7 @@ d3.geo.circle = function() {
   var origin = [0, 0],
       degrees = 90 - 1e-2,
       radians = degrees * d3_geo_radians,
-      arc = d3.geo.greatArc().target(Object);
+      arc = d3.geo.greatArc().target(Selection);
 
   function circle() {
     // TODO render a circle as a Polygon
@@ -7603,13 +7603,13 @@ d3.geo.circle = function() {
   var clipType = d3_geo_type({
 
     FeatureCollection: function(o) {
-      var features = o.features.map(clipType).filter(Object);
-      return features && (o = Object.create(o), o.features = features, o);
+      var features = o.features.map(clipType).filter(Selection);
+      return features && (o = Selection.create(o), o.features = features, o);
     },
 
     Feature: function(o) {
       var geometry = clipType(o.geometry);
-      return geometry && (o = Object.create(o), o.geometry = geometry, o);
+      return geometry && (o = Selection.create(o), o.geometry = geometry, o);
     },
 
     Point: function(o) {
@@ -7626,27 +7626,27 @@ d3.geo.circle = function() {
 
     LineString: function(o) {
       var coordinates = clip(o.coordinates);
-      return coordinates.length && (o = Object.create(o), o.coordinates = coordinates, o);
+      return coordinates.length && (o = Selection.create(o), o.coordinates = coordinates, o);
     },
 
     MultiLineString: function(o) {
       var coordinates = o.coordinates.map(clip).filter(function(d) { return d.length; });
-      return coordinates.length && (o = Object.create(o), o.coordinates = coordinates, o);
+      return coordinates.length && (o = Selection.create(o), o.coordinates = coordinates, o);
     },
 
     Polygon: function(o) {
       var coordinates = o.coordinates.map(clip);
-      return coordinates[0].length && (o = Object.create(o), o.coordinates = coordinates, o);
+      return coordinates[0].length && (o = Selection.create(o), o.coordinates = coordinates, o);
     },
 
     MultiPolygon: function(o) {
       var coordinates = o.coordinates.map(function(d) { return d.map(clip); }).filter(function(d) { return d[0].length; });
-      return coordinates.length && (o = Object.create(o), o.coordinates = coordinates, o);
+      return coordinates.length && (o = Selection.create(o), o.coordinates = coordinates, o);
     },
 
     GeometryCollection: function(o) {
-      var geometries = o.geometries.map(clipType).filter(Object);
-      return geometries.length && (o = Object.create(o), o.geometries = geometries, o);
+      var geometries = o.geometries.map(clipType).filter(Selection);
+      return geometries.length && (o = Selection.create(o), o.geometries = geometries, o);
     }
 
   });

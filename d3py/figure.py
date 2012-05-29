@@ -76,23 +76,23 @@ class PandasFigure(Figure):
                 width_linspace = np.linspace(0, width,len(self.data[colname]))
                 width_linspace = [int(w) for w in width_linspace]
                 
-                y_range = JS.Object("d3.scale") \
+                y_range = JS.Selection("d3.scale") \
                     .add_attribute("ordinal") \
                     .add_attribute("domain", list(self.data[colname])) \
                     .add_attribute("range",  height_linspace)
                     
-                x_range = JS.Object("d3.scale") \
+                x_range = JS.Selection("d3.scale") \
                     .add_attribute("ordinal") \
                     .add_attribute("domain", list(self.data[colname])) \
                     .add_attribute("rangeBands",  [0, width], 0.1)
                     
                 scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
             else:
-                y_range = JS.Object("d3.scale") \
+                y_range = JS.Selection("d3.scale") \
                     .add_attribute("linear") \
                     .add_attribute("range",  [0, height])
                     
-                x_range = JS.Object("d3.scale") \
+                x_range = JS.Selection("d3.scale") \
                     .add_attribute("linear")\
                     .add_attribute("range",  [0, width])
                 
@@ -113,7 +113,7 @@ class PandasFigure(Figure):
         draw += "    width = %s - margin.left - margin.right"%self.margins["width"]
         draw += "    height = %s - margin.top - margin.bottom;"%self.margins["height"]
         # this approach to laying out the graph is from Bostock: http://bl.ocks.org/1624660
-        draw += "var g = " + JS.Object("d3").select("'#chart'") \
+        draw += "var g = " + JS.Selection("d3").select("'#chart'") \
             .append("'svg'") \
             .attr("'width'", 'width + margin.left + margin.right + 25') \
             .attr("'height'", 'height + margin.top + margin.bottom + 25') \

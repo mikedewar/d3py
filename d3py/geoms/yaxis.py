@@ -1,4 +1,4 @@
-from geom import Geom, JavaScript, Object, Function
+from geom import Geom, JavaScript, Selection, Function
 
 class yAxis(Geom):
     def __init__(self,y, label=None, **kwargs):
@@ -20,14 +20,14 @@ class yAxis(Geom):
         scale = "scales.%s_y"%self.y
         draw += "yAxis = d3.svg.axis().scale(%s).orient('left')"%scale
         
-        yaxis_group = Object("g").append('"g"') \
+        yaxis_group = Selection("g").append('"g"') \
               .attr('"class"','"yaxis"') \
               .call("yAxis")
         draw += yaxis_group
 
         if self.label:
             # TODO: Have the transform on this label be less hacky
-            label_group = Object("g").append('"text"') \
+            label_group = Selection("g").append('"text"') \
                     .add_attribute("text", '"%s"'%self.label) \
                     .attr('"y"', '- margin.left + 15') \
                     .attr('"x"', '- height / 2.0') \

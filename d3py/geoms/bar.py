@@ -1,4 +1,4 @@
-from geom import Geom, JavaScript, Object, Function
+from geom import Geom, JavaScript, Selection, Function
 
 class Bar(Geom):
     def __init__(self,x,y,**kwargs):
@@ -37,7 +37,7 @@ class Bar(Geom):
         )
 
         draw = Function("draw", ("data",), [])
-        draw += Object("g").selectAll("'.bars'") \
+        draw += Selection("g").selectAll("'.bars'") \
             .data("data") \
             .enter() \
             .append("'rect'") \

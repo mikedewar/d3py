@@ -1,4 +1,4 @@
-from geom import Geom, JavaScript, Object, Function
+from geom import Geom, JavaScript, Selection, Function
 
 class xAxis(Geom):
     def __init__(self,x, label=None, **kwargs):
@@ -20,7 +20,7 @@ class xAxis(Geom):
         scale = "scales.%s_x"%self.x
         draw += "xAxis = d3.svg.axis().scale(%s)"%scale
         
-        xaxis_group = Object("g").append('"g"') \
+        xaxis_group = Selection("g").append('"g"') \
               .attr('"class"','"xaxis"') \
               .attr('"transform"', '"translate(0," + height + ")"') \
               .call("xAxis")
@@ -28,7 +28,7 @@ class xAxis(Geom):
 
         if self.label:
             # TODO: Have the transform on this label be less hacky
-            label_group = Object("g").append('"text"') \
+            label_group = Selection("g").append('"text"') \
                     .add_attribute("text", '"%s"'%self.label) \
                     .attr('"text-anchor"', '"middle"') \
                     .attr('"x"', "width/2") \

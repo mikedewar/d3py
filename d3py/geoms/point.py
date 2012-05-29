@@ -1,4 +1,4 @@
-from geom import Geom, JavaScript, Object, Function
+from geom import Geom, JavaScript, Selection, Function
 
 class Point(Geom):
     def __init__(self,x,y,c=None,**kwargs):
@@ -30,7 +30,7 @@ class Point(Geom):
         js_cx = Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
         js_cy = Function(None, "d", "return scales.%s_y(d.%s);"%(self.y,self.y)) 
 
-        obj = Object("g").selectAll("'.geom_point'")      \
+        obj = Selection("g").selectAll("'.geom_point'")      \
                             .data("data")                    \
                             .enter()                         \
                             .append("'svg:circle'")          \

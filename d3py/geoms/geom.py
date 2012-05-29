@@ -1,5 +1,5 @@
 from ..css import CSS
-from ..javascript import JavaScript, Object, Function
+from ..javascript import JavaScript, Selection, Function
 
 class Geom:
     def __init__(self, **kwargs):

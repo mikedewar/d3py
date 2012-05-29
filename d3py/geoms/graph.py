@@ -1,45 +1,67 @@
-from geom import Geom, JavaScript, Object, Function
+from geom import Geom, JavaScript, Selection, Function
 
 class ForceLayout(Geom):
-    def __init__(self):
+    def __init__(self,**kwargs):
+        Geom.__init__(self,**kwargs)
+        self.name = "forceLayout"
+        self._id = 'forceLayout'
         self.build_js()
+        self.build_css()
+        self.styles = dict([(k[0].replace('_','-'), k[1]) for k in kwargs.items()])
     
-    def build_js():
-        code = """
-        // draw the graph nodes
-        var node = svg.selectAll("circle.node")
-          .data(json.nodes)
-          .enter()
-          .append("circle")
-            .attr("class", "node")
-            .attr("r", 12);
+    def build_js(self):
+        
+        draw = Function("draw", ("data",), [])
+        
+        draw += Selection("g") \
+            .selectAll("'circle.node'") \
+            .data("data.nodes") \
+            .enter() \
+            .append("'circle'") \
+            .attr("'class'","'node'") \
+            .attr("'r'", 12) 
+        
+        draw += Selection("g") \
+            .selectAll("'line.link'") \
+            .data("data.links") \
+            .enter() \
+            .append("'line'") \
+            .attr("'class'", "'link'")
+        
+        code = [
+            "var force = d3.layout.force()",
+                ".charge(-120)",
+                '.linkDistance(30)',
+                '.size([width, height])',
+                '.nodes(data.nodes)',
+                '.links(data.links)',
+                '.start();',
             
-        // draw the graph edges
-        var link = svg.selectAll("line.link")
-          .data(json.links)
-          .enter().append("line")
-            .style('stroke','black');
-            
-        // create the layout
-        var force = d3.layout.force()
-            .charge(-120)
-            .linkDistance(30)
-            .size([width, height])
-            .nodes(json.nodes)
-            .links(json.links)
-            .start();
-            
-        // define what to do one each tick of the animation
-        force.on("tick", function() {
-            link.attr("x1", function(d) { return d.source.x; })
-                .attr("y1", function(d) { return d.source.y; })
-                .attr("x2", function(d) { return d.target.x; })
-                .attr("y2", function(d) { return d.target.y; });
+            'force.on("tick", function() {',
+                'g.selectAll("line.link").attr("x1", function(d) { return d.source.x; })',
+                    '.attr("y1", function(d) { return d.source.y; })',
+                    '.attr("x2", function(d) { return d.target.x; })',
+                    '.attr("y2", function(d) { return d.target.y; });',
                 
-            node.attr("cx", function(d) { return d.x; })
-                .attr("cy", function(d) { return d.y; });
-            });
-
-        // bind the drag interaction to the nodes
-        node.call(force.drag);
-        """
+                'g.selectAll("circle.node").attr("cx", function(d) { return d.x; })',
+                    '.attr("cy", function(d) { return d.y; });',
+                '});',
+            'g.selectAll("circle.node").call(force.drag);',
+        ]
+        # TODO the order of the next two lines seems inappropriately important
+        draw += JavaScript(code)
+        self.js = JavaScript() + draw
+        self.js += (Function("init", autocall=True) + "console.debug('Hi');")
+        
+        return self.js
+    
+    def build_css(self):
+        line = {
+            "stroke-width": "1px",
+             "stroke": "black",
+        }
+        self.css[".link"] = line
+        # arbitrary styles
+        self.css["#"+self._id] = self.styles
+        return self.css
+        

@@ -178,7 +178,7 @@ class Figure(D3object):
         draw += "    width = %s - margin.left - margin.right"%self.margins["width"]
         draw += "    height = %s - margin.top - margin.bottom;"%self.margins["height"]
         # this approach to laying out the graph is from Bostock: http://bl.ocks.org/1624660
-        draw += "var g = " + JS.Object("d3").select("'#chart'") \
+        draw += "var g = " + JS.Selection("d3").select("'#chart'") \
             .append("'svg'") \
             .attr("'width'", 'width + margin.left + margin.right + 25') \
             .attr("'height'", 'height + margin.top + margin.bottom + 25') \

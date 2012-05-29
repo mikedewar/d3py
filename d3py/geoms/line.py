@@ -1,4 +1,4 @@
-from geom import Geom, JavaScript, Object, Function
+from geom import Geom, JavaScript, Selection, Function
 
 class Line(Geom):
     def __init__(self,x,y,**kwargs):
@@ -18,11 +18,11 @@ class Line(Geom):
         x_fxn = Function(None, "d", "return scales.%s_x(d.%s)"%(self.x, self.x))
         y_fxn = Function(None, "d", "return scales.%s_y(d.%s)"%(self.y, self.y))
 
-        draw += "var line = " + Object("d3.svg").add_attribute("line") \
+        draw += "var line = " + Selection("d3.svg").add_attribute("line") \
                                                       .add_attribute("x", x_fxn) \
                                                       .add_attribute("y", y_fxn)
 
-        draw += Object("g").append("'svg:path'") \
+        draw += Selection("g").append("'svg:path'") \
                                  .attr("'d'", "line(data)") \
                                  .attr("'class'", "'geom_line'") \
                                  .attr("'id'", "'line_%s_%s'"%(self.x, self.y))
