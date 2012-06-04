@@ -34,8 +34,8 @@ class ForceLayout(Geom):
                 '.linkDistance(30)',
                 '.size([width, height])',
                 '.nodes(data.nodes)',
-                '.links(data.links)',
-                '.start();',
+                '.links(data.links);'
+               
             
             'force.on("tick", function() {',
                 'g.selectAll("line.link").attr("x1", function(d) { return d.source.x; })',
@@ -46,7 +46,10 @@ class ForceLayout(Geom):
                 'g.selectAll("circle.node").attr("cx", function(d) { return d.x; })',
                     '.attr("cy", function(d) { return d.y; });',
                 '});',
+                
             'g.selectAll("circle.node").call(force.drag);',
+            
+            'force.start();',
         ]
         # TODO the order of the next two lines seems inappropriately important
         draw += JavaScript(code)
