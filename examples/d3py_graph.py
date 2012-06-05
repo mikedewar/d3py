@@ -6,7 +6,6 @@ logging.basicConfig(level=logging.DEBUG)
 import networkx as nx
 
 G=nx.Graph()
-G.add_node("spam")
 G.add_edge(1,2)
 
 # use 'with' if you are writing a script and want to serve this up forever

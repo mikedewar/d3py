@@ -36,7 +36,6 @@ class PandasFigure(Figure):
             interactive=True, font="Asap", logging=False,  template=None,
             port=8000, **kwargs
         )
-        print dir(self)
         # store data
         self.data = data
         self.save_data()

@@ -13,7 +13,7 @@ df = pandas.DataFrame({
     "apple_type" : bins[:-1]
 })
 
-with d3py.Figure(df) as p:
+with d3py.PandasFigure(df) as p:
     p += d3py.Bar(x="apple_type", y = "count", fill = "MediumAquamarine")
     p += d3py.xAxis(x="apple_type", label="Apple Type")
     p += d3py.yAxis(y="count", label="Number")
