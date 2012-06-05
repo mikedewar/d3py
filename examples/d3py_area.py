@@ -2,11 +2,11 @@ import numpy as np
 import d3py
 import pandas
 
+N = 5
 T = 5*np.pi
-x = np.linspace(-T,T,100)
-a = 0.05
-y = np.exp(-a*x) * np.sin(x)
-y0 = np.exp(-a*x) * np.cos(x)
+x = np.linspace(-T,T,N)
+y = [10 for i in range(N)]
+y0 = [20 for i in range(N)] 
 
 df = pandas.DataFrame({
     'x' : x,
@@ -16,6 +16,4 @@ df = pandas.DataFrame({
 
 with d3py.PandasFigure(df, 'd3py_line', width=600, height=200) as fig:
     fig += d3py.geoms.Area('x', 'y', 'y0')
-    fig += d3py.xAxis('x')
-    fig += d3py.yAxis('y')
     fig.show()
