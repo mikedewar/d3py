@@ -32,9 +32,9 @@ class PandasFigure(Figure):
         
         """
         super(PandasFigure, self).__init__(
-            name="figure", width=400, height=100, 
-            interactive=True, font="Asap", logging=False,  template=None,
-            port=8000, **kwargs
+            name=name, width=width, height=height, 
+            interactive=interactive, font=font, logging=logging,  template=template,
+            port=port, **kwargs
         )
         # store data
         self.data = data
