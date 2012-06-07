@@ -25,12 +25,12 @@ class Bar(Geom):
 
 
         # build scales
-        scales = [""" 
+        scales = """ 
             scales = {
-                x : get_scales(%s, 'horizontal')
-                y : get_scales(%s, 'vertical')
+                x : get_scales('%s', 'horizontal'),
+                y : get_scales('%s', 'vertical')
             }
-        """%(self.x, self.y), ]
+        """%(self.x, self.y)
 
         xfxn = Function(None, "d", "return scales.x(d.%s);"%self.x)
         yfxn = Function( None, "d", "return scales.y(d.%s)"%self.y)
@@ -42,7 +42,7 @@ class Bar(Geom):
         )
 
         draw = Function("draw", ("data",), [scales])
-        #draw += scales
+        draw += scales
         draw += Selection("g").selectAll("'.bars'") \
             .data("data") \
             .enter() \

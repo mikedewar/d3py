@@ -1,6 +1,7 @@
 #!/usr/bin/python
+import logging
 
-class JavaScript:
+class JavaScript(object):
     # TODO: Add a lookup function so you can easily find/edit functions/objects
     #       defined within the JavaScript object
     def __init__(self, statements=None):
@@ -127,7 +128,7 @@ class Selection:
             obj += ".%s(%s)"%(opt["name"], param)
         return obj
 
-class Function:
+class Function(object):
     def __init__(self, name=None, arguments=None, statements=None, autocall=False):
         """
         name: string
@@ -162,18 +163,22 @@ class Function:
         elif isinstance(other, Selection):
             other = [other, ]
         else:
+            print isinstance(other, Function)
+            print other.statements
+            logging.debug('failed to convert %s object:\n %s\n\n to statements'%(type(other),other))
             other = None
         return other
 
     def __add__(self, more_statements):
-        if isinstance(more_statements, str):
-            more_statements = [more_statements, ]
+        more_statements = self._obj_to_statements(more_statements)
         if isinstance(more_statements, (list, tuple)):
-            return Function(self.name, self.arguments, self.statements + more_statements, self.autocall)
-        elif isinstance(more_statements, Function):
-            more_statements = str(more_statements)
-            return Function(self.name, self.arguments, self.statements + more_statements, self.autocall)
-        raise NotImplementedError((more_statements,type(more_statements)))
+            return Function(
+                self.name, 
+                self.arguments, 
+                self.statements + more_statements, 
+                self.autocall
+            )
+        raise NotImplementedError(type(more_statements))
 
     def __radd__(self, more_statements):
         more_statements = self._obj_to_statements(more_statements)

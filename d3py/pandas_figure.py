@@ -61,13 +61,14 @@ class PandasFigure(Figure):
         build a function that returns the requested scale 
         """
         logging.debug('building scales')
-        get_scales = JS.Function("get_scales", ("colnames", "orientation"))
-                           
-        get_scales += "console.log('what up')"
-        get_scales += "scale = d3.scale.linear()"
-        get_scales += "return scale"
+        get_scales = """
+        function get_scales(colnames, orientation){
+            console.log('what up')
+            scale = d3.scale.linear()
+            return scale
+        }
+        """
         return get_scales
-
         """
         # we take a slightly over the top approach to scales at the moment
         scale = {}
@@ -127,8 +128,13 @@ class PandasFigure(Figure):
             .attr("'height'", 'height + margin.top + margin.bottom + 25') \
             .append("'g'") \
             .attr("'transform'", "'translate(' + margin.left + ',' + margin.top + ')'")
-        
-        draw += self.build_scales()
+        scales = self.build_scales()
+        print "BOOM"
+        print scales
+        print type(scales)
+        print type(draw)
+        draw += scales
+        print type(draw)
         self.js = JS.JavaScript() + draw + JS.Function("init")
 
     def data_to_json(self):
