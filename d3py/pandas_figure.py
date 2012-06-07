@@ -55,10 +55,19 @@ class PandasFigure(Figure):
                 assert p in self.data, errmsg%(geom.name, p)
         self.geoms.append(geom)
         self.save()
-    
+
     def build_scales(self):
         """
-        create appropriate scales for each column of the data frame
+        build a function that returns the requested scale 
+        """
+        logging.debug('building scales')
+        get_scales = JS.Function("get_scales", ("colnames", "orientation"))
+                           
+        get_scales += "console.log('what up')"
+        get_scales += "scale = d3.scale.linear()"
+        get_scales += "return scale"
+        return get_scales
+
         """
         # we take a slightly over the top approach to scales at the moment
         scale = {}
@@ -104,7 +113,7 @@ class PandasFigure(Figure):
                     
                 scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
         return scale
-        
+        """        
 
     def build_js(self):
         draw = JS.Function("draw", ("data",))
@@ -119,8 +128,7 @@ class PandasFigure(Figure):
             .append("'g'") \
             .attr("'transform'", "'translate(' + margin.left + ',' + margin.top + ')'")
         
-        scale = self.build_scales()
-        draw += "var scales = %s;"%json.dumps(scale, sort_keys=True, indent=4).replace('"', '')
+        draw += self.build_scales()
         self.js = JS.JavaScript() + draw + JS.Function("init")
 
     def data_to_json(self):

@@ -166,10 +166,14 @@ class Function:
         return other
 
     def __add__(self, more_statements):
-        more_statements = self._obj_to_statements(more_statements)
+        if isinstance(more_statements, str):
+            more_statements = [more_statements, ]
         if isinstance(more_statements, (list, tuple)):
             return Function(self.name, self.arguments, self.statements + more_statements, self.autocall)
-        raise NotImplementedError
+        elif isinstance(more_statements, Function):
+            more_statements = str(more_statements)
+            return Function(self.name, self.arguments, self.statements + more_statements, self.autocall)
+        raise NotImplementedError((more_statements,type(more_statements)))
 
     def __radd__(self, more_statements):
         more_statements = self._obj_to_statements(more_statements)

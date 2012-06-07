@@ -22,21 +22,27 @@ class Bar(Geom):
         self.styles = dict([(k[0].replace('_','-'), k[1]) for k in kwargs.items()])
     
     def build_js(self):
-        xfxn = Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
-        
-        yfxn = Function(
-            None,
-            "d",
-            "return scales.%(y)s_y(d.%(y)s)"%{"y":self.y}
-        )
+
+
+        # build scales
+        scales = [""" 
+            scales = {
+                x : get_scales(%s, 'horizontal')
+                y : get_scales(%s, 'vertical')
+            }
+        """%(self.x, self.y), ]
+
+        xfxn = Function(None, "d", "return scales.x(d.%s);"%self.x)
+        yfxn = Function( None, "d", "return scales.y(d.%s)"%self.y)
         
         heightfxn = Function(
             None, 
             "d", 
-            "return height - scales.%(y)s_y(d.%(y)s)"%{"y":self.y}
+            "return height - scales.y(d.%s)"%self.y
         )
 
-        draw = Function("draw", ("data",), [])
+        draw = Function("draw", ("data",), [scales])
+        #draw += scales
         draw += Selection("g").selectAll("'.bars'") \
             .data("data") \
             .enter() \
@@ -45,7 +51,7 @@ class Bar(Geom):
             .attr("'id'", "'%s'"%self._id) \
             .attr("'x'", xfxn) \
             .attr("'y'", yfxn) \
-            .attr("'width'", "scales.%s_x.rangeBand()"%self.x)\
+            .attr("'width'", "scales.x.rangeBand()")\
             .attr("'height'", heightfxn)
         # TODO: rangeBand above breaks for histogram type bar-plots... fix!
 
