@@ -27,8 +27,8 @@ class Bar(Geom):
         # build scales
         scales = """ 
             scales = {
-                x : get_scales('%s', 'horizontal'),
-                y : get_scales('%s', 'vertical')
+                x : get_scales(['%s'], 'horizontal'),
+                y : get_scales(['%s'], 'vertical')
             }
         """%(self.x, self.y)
 

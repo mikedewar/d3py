@@ -12,12 +12,20 @@ class Line(Geom):
         self.build_css()
         
     def build_js(self):
+        # build scales
+        scales = """ 
+            scales = {
+                x : get_scales(['%s'], 'horizontal'),
+                y : get_scales(['%s'], 'vertical')
+            }
+        """%(self.x, self.y)
         # add the line
+
+        x_fxn = Function(None, "d", "return scales.x(d.%s)"%self.x)
+        y_fxn = Function(None, "d", "return scales.y(d.%s)"%self.y)
+
         draw = Function("draw", ("data", ))
-
-        x_fxn = Function(None, "d", "return scales.%s_x(d.%s)"%(self.x, self.x))
-        y_fxn = Function(None, "d", "return scales.%s_y(d.%s)"%(self.y, self.y))
-
+        draw += scales
         draw += "var line = " + Selection("d3.svg").add_attribute("line") \
                                                       .add_attribute("x", x_fxn) \
                                                       .add_attribute("y", y_fxn)

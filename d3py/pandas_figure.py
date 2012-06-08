@@ -61,60 +61,57 @@ class PandasFigure(Figure):
         build a function that returns the requested scale 
         """
         logging.debug('building scales')
+        width = self.args["width"]
+        height = self.args["height"]
         get_scales = """
         function get_scales(colnames, orientation){
-            console.log('what up')
-            scale = d3.scale.linear()
+            var this_data = d3.merge(
+                colnames.map(
+                    function(name){
+                        return data.map(
+                            function(d){
+                                return d[name]
+                            }
+                        )
+                    }
+                )
+            )
+            if (orientation==="vertical"){
+                if (isNaN(this_data[0])){
+                    // not a number
+                    console.log('using ordinal scale for vertical axis')
+                    scale = d3.scale.ordinal()
+                        .domain(this_data)
+                        .range(d3.range(height,0,height/this_data.length))
+                } else {
+                    // a number
+                    console.log('using linear scale for vertical axis')
+                    extent = d3.extent(this_data)
+                    extent[0] = extent[0] > 0 ? 0 : extent[0]
+                    scale = d3.scale.linear()
+                        .domain(extent)
+                        .range([height,0])
+
+                }
+            } else {
+                if (isNaN(this_data[0])){
+                    // not a number
+                    console.log('using ordinal scale for horizontal axis')
+                    scale = d3.scale.ordinal()
+                        .domain(this_data)
+                        .rangeBands([0,width], 0.1)
+                } else {
+                    // a number
+                    console.log('using linear scale for horizontal axis')
+                    scale = d3.scale.linear()
+                        .domain(d3.extent(this_data))
+                        .range([0,width])
+                }
+            }
             return scale
         }
         """
         return get_scales
-        """
-        # we take a slightly over the top approach to scales at the moment
-        scale = {}
-        width = self.args["width"]
-        height = self.args["height"]
-        for colname in self.data.columns:
-            # we test to see if the column contains strings or numbers
-            if type(self.data[colname][0]) is str:
-                logging.info("using ordinal scale for %s"%colname)
-                # if the column contains characters, build an ordinal scale
-                height_linspace = np.linspace(height,0,len(self.data[colname]))
-                height_linspace = [int(h) for h in height_linspace]
-                
-                width_linspace = np.linspace(0, width,len(self.data[colname]))
-                width_linspace = [int(w) for w in width_linspace]
-                
-                y_range = JS.Selection("d3.scale") \
-                    .add_attribute("ordinal") \
-                    .add_attribute("domain", list(self.data[colname])) \
-                    .add_attribute("range",  height_linspace)
-                    
-                x_range = JS.Selection("d3.scale") \
-                    .add_attribute("ordinal") \
-                    .add_attribute("domain", list(self.data[colname])) \
-                    .add_attribute("rangeBands",  [0, width], 0.1)
-                    
-                scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
-            else:
-                y_range = JS.Selection("d3.scale") \
-                    .add_attribute("linear") \
-                    .add_attribute("range",  [0, height])
-                    
-                x_range = JS.Selection("d3.scale") \
-                    .add_attribute("linear")\
-                    .add_attribute("range",  [0, width])
-                
-                if min(self.data[colname]) < 0:
-                    x_range.add_attribute("domain", [min(self.data[colname]), max(self.data[colname])])
-                    y_range.add_attribute("domain", [max(self.data[colname]), min(self.data[colname])])
-                else:
-                    x_range.add_attribute("domain", [0, max(self.data[colname])])
-                    y_range.add_attribute("domain", [max(self.data[colname]), 0])
-                    
-                scale.update({"%s_y"%colname: str(y_range), "%s_x"%colname: str(x_range)})
-        return scale
-        """        
 
     def build_js(self):
         draw = JS.Function("draw", ("data",))
@@ -129,12 +126,7 @@ class PandasFigure(Figure):
             .append("'g'") \
             .attr("'transform'", "'translate(' + margin.left + ',' + margin.top + ')'")
         scales = self.build_scales()
-        print "BOOM"
-        print scales
-        print type(scales)
-        print type(draw)
         draw += scales
-        print type(draw)
         self.js = JS.JavaScript() + draw + JS.Function("init")
 
     def data_to_json(self):

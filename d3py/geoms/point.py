@@ -26,9 +26,16 @@ class Point(Geom):
         return self.css
         
     def build_js(self):
+        scales = """ 
+            scales = {
+                x : get_scales(['%s'], 'horizontal'),
+                y : get_scales(['%s'], 'vertical')
+            }
+        """%(self.x, self.y)
         draw = Function("draw", ("data",))
-        js_cx = Function(None, "d", "return scales.%s_x(d.%s);"%(self.x,self.x)) 
-        js_cy = Function(None, "d", "return scales.%s_y(d.%s);"%(self.y,self.y)) 
+        draw += scales
+        js_cx = Function(None, "d", "return scales.x(d.%s);"%self.x) 
+        js_cy = Function(None, "d", "return scales.y(d.%s);"%self.y) 
 
         obj = Selection("g").selectAll("'.geom_point'")      \
                             .data("data")                    \

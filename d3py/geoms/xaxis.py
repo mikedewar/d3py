@@ -17,7 +17,7 @@ class xAxis(Geom):
     
     def build_js(self):
         draw = Function("draw", ("data",), [])
-        scale = "scales.%s_x"%self.x
+        scale = "scales.x"
         draw += "xAxis = d3.svg.axis().scale(%s)"%scale
         
         xaxis_group = Selection("g").append('"g"') \

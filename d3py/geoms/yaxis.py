@@ -17,7 +17,7 @@ class yAxis(Geom):
     
     def build_js(self):
         draw = Function("draw", ("data",), [])
-        scale = "scales.%s_y"%self.y
+        scale = "scales.y"
         draw += "yAxis = d3.svg.axis().scale(%s).orient('left')"%scale
         
         yaxis_group = Selection("g").append('"g"') \
