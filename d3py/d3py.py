@@ -9,74 +9,10 @@ import json
 from css import CSS
 import javascript as JS
 
-class D3object(object):
-    
-    def build_js():
-        raise NotImplementedError
-
-    def build_css():
-        raise NotImplementedError
-
-    def build_html():
-        raise NotImplementedError
-
-    def build_geoms():
-        raise NotImplementedError
-
-    def save_data(self):
-        raise NotImplementedError
-
-    def save_css(self):
-        raise NotImplementedError
-
-    def save_js(self):
-        raise NotImplementedError
-
-    def save_html(self):
-        raise NotImplementedError
-
-    def build(self):
-        logging.debug('building chart')
-        self.build_js()
-        self.build_css()
-        self.build_html()
-        self.build_geoms()
-
-    def update(self):
-        logging.debug('updating chart')
-        self.build()
-        self.save()
-
-    def save(self):
-        logging.debug('saving chart')
-        self.save_data()
-        self.save_css()
-        self.save_js()
-        self.save_html()
-
-    def clanup(self):
-        raise NotImplementedError
-
-    def show(self):
-        self.update()
-        self.save()
-
-    def __enter__(self):
-        self.interactive = False
-        return self
-
-    def __exit__(self, ex_type, ex_value, ex_tb):
-        if ex_tb is not None:
-            print "Cleanup after exception: %s: %s"%(ex_type, ex_value)
-        self.cleanup()
-
-    def __del__(self):
-        self.cleanup()
-
-class Figure(D3object):
-    def __init__(self, name="figure", width=400, height=100, 
-        interactive=True, font="Asap", logging=False,  template=None,
-        port=8000, **kwargs):
+class Figure(object):
+    def __init__(self, name, width, height, 
+        interactive, font, logging,  template,
+        port, **kwargs):
         # store data
         self.name = '_'.join(name.split())
         self.filemap = {
@@ -85,10 +21,12 @@ class Figure(D3object):
                 "timestamp":time.time()
             },
         }
+
         # Networking stuff
         self.port = port
-        self.server_thread = None
+        self._server_thread = None
         self.httpd = None
+
         # interactive is True by default as this is designed to be a command line tool
         # we do not want to block interaction after plotting.
         self.interactive = interactive
@@ -122,6 +60,41 @@ class Figure(D3object):
         kwargs = dict([(k[0].replace('_','-'), k[1]) for k in kwargs.items()])
         self.args.update(kwargs)
 
+    def _build(self):
+        logging.debug('building chart')
+        self._build_js()
+        self._build_css()
+        self._build_html()
+        self._build_geoms()
+
+    def update(self):
+        logging.debug('updating chart')
+        self._build()
+        self.save()
+
+    def save(self):
+        logging.debug('saving chart')
+        self._save_data()
+        self._save_css()
+        self._save_js()
+        self._save_html()
+
+    def _clanup(self):
+        raise NotImplementedError
+
+
+    def __enter__(self):
+        self.interactive = False
+        return self
+
+    def __exit__(self, ex_type, ex_value, ex_tb):
+        if ex_tb is not None:
+            print "Cleanup after exception: %s: %s"%(ex_type, ex_value)
+        self._cleanup()
+
+    def __del__(self):
+        self._cleanup()
+
     def ion(self):
         """
         Turns interactive mode on ala pylab
@@ -134,45 +107,44 @@ class Figure(D3object):
         """
         self.interactive = False
 
-    def set_data(self):
+    def _set_data(self):
         self.update()
 
-    def add_geom(self, geom):
+    def _add_geom(self, geom):
         self.geoms.append(geom)
         self.save()
     
-    def build_css(self):
-        # build up the basic css
-        chart = {
-        }
+    def _build_css(self):
+        #._build up the basic css
+        chart = {}
         chart.update(self.args)
         self.css["#chart"] = chart
 
-    def build_html(self):
+    def _build_html(self):
         # we start the html using a template - it's pretty simple
         self.html = self.template
         self.html = self.html.replace("{{ name }}", self.name)
         self.html = self.html.replace("{{ font }}", self.font)
-        self.save_html()
+        self._save_html()
 
-    def build_geoms(self):
+    def _build_geoms(self):
         self.js_geoms = JS.JavaScript()
         self.css_geoms = CSS()
         for geom in self.geoms:
-            self.js_geoms.merge(geom.build_js())
-            self.css_geoms += geom.build_css()
+            self.js_geoms.merge(geom._build_js())
+            self.css_geoms += geom._build_css()
 
     def __add__(self, geom):
-        self.add_geom(geom)
+        self._add_geom(geom)
 
     def __iadd__(self, geom):
-        self.add_geom(geom)
+        self._add_geom(geom)
         return self
 
-    def data_to_json(self):
+    def _data_to_json(self):
         raise NotImplementedError
         
-    def build_js(self):
+    def _build_js(self):
         draw = JS.Function("draw", ("data",))
         draw += "var margin = %s;"%json.dumps(self.margins).replace('""','')
         draw += "    width = %s - margin.left - margin.right"%self.margins["width"]
@@ -187,7 +159,7 @@ class Figure(D3object):
 
         self.js = JS.JavaScript() + draw + JS.Function("init")
 
-    def save_data(self,directory=None):
+    def _save_data(self,directory=None):
         """
         save a json representation of the figure's data frame
         
@@ -198,17 +170,17 @@ class Figure(D3object):
         """
         # write data
         filename = "%s.json"%self.name
-        self.filemap[filename] = {"fd":StringIO(self.data_to_json()),
+        self.filemap[filename] = {"fd":StringIO(self._data_to_json()),
                 "timestamp":time.time()}
 
-    def save_css(self):
+    def _save_css(self):
         # write css
         filename = "%s.css"%self.name
         css = "%s\n%s"%(self.css, self.css_geoms)
         self.filemap[filename] = {"fd":StringIO(css),
                 "timestamp":time.time()}
 
-    def save_js(self):
+    def _save_js(self):
         # write javascript
         final_js = JS.JavaScript()
         final_js.merge(self.js)
@@ -219,7 +191,7 @@ class Figure(D3object):
         self.filemap[filename] = {"fd":StringIO(js),
                 "timestamp":time.time()}
 
-    def save_html(self):
+    def _save_html(self):
         # update the html with the correct port number
         self.html = self.html.replace("{{ port }}", str(self.port))
         # write html
@@ -228,29 +200,28 @@ class Figure(D3object):
                 "timestamp":time.time()}
 
     def show(self, interactive=None):
-        super(Figure, self).show()
-
+        self.update()
+        self.save()
         if interactive is not None:
             blocking = not interactive
         else:
             blocking = not self.interactive
 
         if blocking:
-            self.serve(blocking=True)
+            self._serve(blocking=True)
         else:
             # if not blocking, we serve the 
-            self.serve(blocking=False)
+            self._serve(blocking=False)
             # fire up a browser
             webbrowser.open_new_tab("http://localhost:%s/%s.html"%(self.port, self.name))
 
-    def serve(self, blocking=True):
+    def _serve(self, blocking=True):
         """
         start up a server to serve the files for this vis.
-
         """
         msgparams = (self.port, self.name)
         url = "http://localhost:%s/%s.html"%msgparams
-        if self.server_thread is None or self.server_thread.active_count() == 0:
+        if self._server_thread is None or self._server_thread.active_count() == 0:
             Handler = CustomHTTPRequestHandler
             Handler.filemap = self.filemap
             Handler.logging = self.logging
@@ -264,20 +235,20 @@ class Figure(D3object):
                 msg = "You can find your chart at " + url
                 print msg
                 print "Ctrl-C to stop serving the chart and quit!"
-                self.server_thread = None
+                self._server_thread = None
                 self.httpd.serve_forever()
             else:
                 logging.info('serving asynchronously on port %s'%msgparams[0])
-                self.server_thread = threading.Thread(
+                self._server_thread = threading.Thread(
                     target=self.httpd.serve_forever
                 )
-                self.server_thread.daemon = True
-                self.server_thread.start()
+                self._server_thread.daemon = True
+                self._server_thread.start()
                 msg = "You can find your chart at " + url
                 print msg
 
 
-    def cleanup(self):
+    def _cleanup(self):
         try:
             if self.httpd is not None:
                 print "Shutting down httpd"

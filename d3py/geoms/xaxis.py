@@ -8,14 +8,14 @@ class xAxis(Geom):
         """
         Geom.__init__(self, **kwargs)
         self.x = x
-        self.label = label
+        self.label = label if label else x
         self.params = [x]
         self._id = 'xaxis'
         self.name = 'xaxis'
-        self.build_css()
-        self.build_js()
+        self._build_css()
+        self._build_js()
     
-    def build_js(self):
+    def _build_js(self):
         draw = Function("draw", ("data",), [])
         scale = "scales.x"
         draw += "xAxis = d3.svg.axis().scale(%s)"%scale
@@ -38,7 +38,7 @@ class xAxis(Geom):
         self.js = JavaScript() + draw
         return self.js
     
-    def build_css(self):
+    def _build_css(self):
         axis_path = {
             "fill" : "none",
             "stroke" : "#000"

@@ -6,7 +6,7 @@ import javascript as JS
 from d3py import Figure
 
 class PandasFigure(Figure):
-    def __init__(self, data, name="figure", width=400, height=100, 
+    def __init__(self, data, name="figure", width=800, height=400, 
         interactive=True, font="Asap", logging=False,  template=None,
         port=8000, **kwargs):
         """
@@ -17,9 +17,9 @@ class PandasFigure(Figure):
             bar of the webpage, and is the name of the folder where
             your files will be stored.
         width : int 
-            width of the figure in pixels (default is 400)
+            width of the figure in pixels (default is 1024)
         height : int 
-            height of the figure in pixels (default is 100)
+            height of the figure in pixels (default is 768)
         interactive : boolean
             set this to false if you are drawing the graph using a script and
             not in the command line (default is True)
@@ -38,9 +38,9 @@ class PandasFigure(Figure):
         )
         # store data
         self.data = data
-        self.save_data()
+        self._save_data()
 
-    def set_data(self, data):
+    def _set_data(self, data):
         errmsg = "the %s geom requests %s which is not the given dataFrame!"
         for geom in self.geoms:
             for param in geom.params:
@@ -48,7 +48,7 @@ class PandasFigure(Figure):
                     assert param in data, errmsg%(geom.name, param)
         self.update()
 
-    def add_geom(self, geom):
+    def _add_geom(self, geom):
         errmsg = "the %s geom requests %s which is not in our dataFrame!"
         for p in geom.params:
             if p:
@@ -56,13 +56,11 @@ class PandasFigure(Figure):
         self.geoms.append(geom)
         self.save()
 
-    def build_scales(self):
+    def _build_scales(self):
         """
         build a function that returns the requested scale 
         """
         logging.debug('building scales')
-        width = self.args["width"]
-        height = self.args["height"]
         get_scales = """
         function get_scales(colnames, orientation){
             var this_data = d3.merge(
@@ -113,7 +111,7 @@ class PandasFigure(Figure):
         """
         return get_scales
 
-    def build_js(self):
+    def _build_js(self):
         draw = JS.Function("draw", ("data",))
         draw += "var margin = %s;"%json.dumps(self.margins).replace('""','')
         draw += "    width = %s - margin.left - margin.right"%self.margins["width"]
@@ -125,11 +123,11 @@ class PandasFigure(Figure):
             .attr("'height'", 'height + margin.top + margin.bottom + 25') \
             .append("'g'") \
             .attr("'transform'", "'translate(' + margin.left + ',' + margin.top + ')'")
-        scales = self.build_scales()
+        scales = self._build_scales()
         draw += scales
         self.js = JS.JavaScript() + draw + JS.Function("init")
 
-    def data_to_json(self):
+    def _data_to_json(self):
         """
         converts the data frame stored in the figure to JSON
         """

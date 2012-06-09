@@ -9,10 +9,10 @@ class Point(Geom):
         self._id = 'point_%s_%s_%s'%(self.x,self.y,self.c)
         self.params = [x,y,c]
         self.name = "point"
-        self.build_css()
-        self.build_js()
+        self._build_css()
+        self._build_js()
     
-    def build_css(self):
+    def _build_css(self):
         point = {
             "stroke-width"  : "1px",
              "stroke"        : "black",
@@ -25,7 +25,7 @@ class Point(Geom):
         self.css["#"+self._id] = self.styles
         return self.css
         
-    def build_js(self):
+    def _build_js(self):
         scales = """ 
             scales = {
                 x : get_scales(['%s'], 'horizontal'),

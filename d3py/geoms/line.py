@@ -8,10 +8,10 @@ class Line(Geom):
         self.params = [x,y]
         self.debug = True
         self.name = "line"
-        self.build_js()
-        self.build_css()
+        self._build_js()
+        self._build_css()
         
-    def build_js(self):
+    def _build_js(self):
         # build scales
         scales = """ 
             scales = {
@@ -38,7 +38,7 @@ class Line(Geom):
         self.js = JavaScript(draw)
         return self.js
         
-    def build_css(self):
+    def _build_css(self):
         # default css
         geom_line = {"stroke-width": "1px", "stroke": "black", "fill": None}
         self.css[".geom_line"] = geom_line

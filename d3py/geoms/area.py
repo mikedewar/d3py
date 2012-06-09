@@ -9,10 +9,10 @@ class Area(Geom):
         self.params = [x, yupper, ylower]
         self.debug = True
         self.name = "area"
-        self.build_js()
-        self.build_css()
+        self._build_js()
+        self._build_css()
         
-    def build_js(self):
+    def _build_js(self):
 
 
         scales = """
@@ -47,7 +47,7 @@ class Area(Geom):
         self.js = JavaScript(draw)
         return self.js
         
-    def build_css(self):
+    def _build_css(self):
         # default css
         geom_area = {"stroke-width": "1px", "stroke": "black", "fill": "MediumSeaGreen"}
         self.css[".geom_area"] = geom_area

@@ -7,8 +7,8 @@ class Geom:
         self.js = JavaScript()
         self.css = CSS()
     
-    def build_js(self):
+    def _build_js(self):
         raise NotImplementedError
     
-    def build_css(self):
+    def _build_css(self):
         raise NotImplementedError

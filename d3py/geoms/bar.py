@@ -16,12 +16,12 @@ class Bar(Geom):
         self.y = y
         self.name = "bar"
         self._id = 'bar_%s_%s'%(self.x,self.y)
-        self.build_js()
-        self.build_css()
+        self._build_js()
+        self._build_css()
         self.params = [x,y]
         self.styles = dict([(k[0].replace('_','-'), k[1]) for k in kwargs.items()])
     
-    def build_js(self):
+    def _build_js(self):
 
 
         # build scales
@@ -59,7 +59,7 @@ class Bar(Geom):
         self.js += (Function("init", autocall=True) + "console.debug('Hi');")
         return self.js
     
-    def build_css(self):
+    def _build_css(self):
         bar = {
             "stroke-width": "1px",
              "stroke": "black",

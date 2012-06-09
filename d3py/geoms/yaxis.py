@@ -8,14 +8,14 @@ class yAxis(Geom):
         """
         Geom.__init__(self, **kwargs)
         self.y = y
-        self.label = label
+        self.label = label if label else y
         self.params = [y]
         self._id = 'yaxis'
         self.name = 'yaxis'
-        self.build_css()
-        self.build_js()
+        self._build_css()
+        self._build_js()
     
-    def build_js(self):
+    def _build_js(self):
         draw = Function("draw", ("data",), [])
         scale = "scales.y"
         draw += "yAxis = d3.svg.axis().scale(%s).orient('left')"%scale
@@ -38,7 +38,7 @@ class yAxis(Geom):
         self.js = JavaScript() + draw
         return self.js
     
-    def build_css(self):
+    def _build_css(self):
         axis_path = {
             "fill" : "none",
             "stroke" : "#000"
