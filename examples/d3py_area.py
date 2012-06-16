@@ -14,7 +14,7 @@ df = pandas.DataFrame({
     'y0' : y0,
 })
 
-with d3py.PandasFigure(df, 'd3py_area') as fig:
+with d3py.PandasFigure(df, 'd3py_area', width=500, height=250) as fig:
     fig += d3py.geoms.Area('x', 'y', 'y0')
     fig += d3py.geoms.xAxis('x')
     fig += d3py.geoms.yAxis('y')
