@@ -5,11 +5,11 @@ class ForceLayout(Geom):
         Geom.__init__(self,**kwargs)
         self.name = "forceLayout"
         self._id = 'forceLayout'
-        self.build_js()
-        self.build_css()
+        self._build_js()
+        self._build_css()
         self.styles = dict([(k[0].replace('_','-'), k[1]) for k in kwargs.items()])
     
-    def build_js(self):
+    def _build_js(self):
         
         draw = Function("draw", ("data",), [])
         
@@ -58,7 +58,7 @@ class ForceLayout(Geom):
         
         return self.js
     
-    def build_css(self):
+    def _build_css(self):
         line = {
             "stroke-width": "1px",
              "stroke": "black",

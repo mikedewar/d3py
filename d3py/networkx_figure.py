@@ -40,9 +40,9 @@ class NetworkXFigure(Figure):
         )
         # store data
         self.G = graph
-        self.save_data()
+        self._save_data()
 
-    def data_to_json(self):
+    def _data_to_json(self):
         """
         converts the data frame stored in the figure to JSON
         """
