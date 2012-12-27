@@ -35,7 +35,7 @@ An example session could like:
 	})
 	## build up a figure, ggplot2 style
 	# instantiate the figure object
-	fig = d3py.Figure(df, name="basic_example", width=300, height=300) 
+	fig = d3py.PandasFigure(df, name="basic_example", width=300, height=300) 
 	# add some red points
 	fig += d3py.geoms.Point(x="pressure", y="temp", fill="red")
 	# writes 3 files, starts up a server, then draws some beautiful points in Chrome
