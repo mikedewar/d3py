@@ -15,12 +15,10 @@ class Figure(object):
 
         # store data
         self.name = '_'.join(name.split())
-
-        # refer to the d3.js stored in this installation
-        d3pydir = os.path.dirname(os.path.abspath(__file__))
+        d3py_path = os.path.abspath(os.path.dirname(__file__))
         self.filemap = {
             "static/d3.js":{
-                "fd":open(d3pydir+"/static/d3.js","r"), 
+                "fd":open(d3py_path+"/d3.js","r"), 
                 "timestamp":time.time()
             },
         }
@@ -29,7 +27,6 @@ class Figure(object):
         self.port = port
         self._server_thread = None
         self.httpd = None
-        print "httpd:", self.httpd
 
         # interactive is True by default as this is designed to be a command line tool
         # we do not want to block interaction after plotting.
@@ -50,7 +47,7 @@ class Figure(object):
         # we use bostock's scheme http://bl.ocks.org/1624660
         self.css = CSS()
         self.html = ""
-        self.template = template or "".join(open(d3pydir+'/static/d3py_template.html').readlines())
+        self.template = template or "".join(open(d3py_path+'/d3py_template.html').readlines())
         self.js_geoms = JS.JavaScript()
         self.css_geoms = CSS()
         self.geoms = []
@@ -259,7 +256,6 @@ class Figure(object):
                 self.httpd.shutdown()
                 self.httpd.server_close()
         except Exception, e:
-            print dir(self)
             print "Error in clean-up: %s"%e
 
 
