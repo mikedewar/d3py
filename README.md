@@ -41,7 +41,7 @@ An example session could like:
 	# writes 3 files, starts up a server, then draws some beautiful points in Chrome
 	fig.show() 
 
-Check out the examples in the folder for more functionality! Assuming everything is working OK, the examples should generate the following plots:
+Check out the examples in the folder for more functionality! Assuming everything is working OK, the examples should generate (something akin to) the following plots:
 
 # point
 
