@@ -42,3 +42,21 @@ An example session could like:
 	fig.show() 
 
 Check out the examples in the folder for more functionality! 
+
+This is the output of the examples in the examples folder. We'll update them as we introduce new features.
+
+# point
+
+![point example](http://mikedewar.org/scatter.png)
+
+# line
+
+![line example](http://mikedewar.org/line.png)
+
+# bar
+
+![bar example](http://mikedewar.org/bar.png)
+
+# area
+
+![area example](http://mikedewar.org/area.png)
