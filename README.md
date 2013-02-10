@@ -7,7 +7,7 @@ d3py accomplishes this by building on two excellent packages. The first is `d3.j
 
 The idioms used to plot data are very simple, and borrow from R's [ggplot2](http://had.co.nz/ggplot2/) (Hadley Wickham) and Python's [matplotlib](http://matplotlib.sourceforge.net/) (John Hunter et al):
 
-1. create a `Figure` object around a `DataFrame`
+1. create a `PandasFigure` object around a `DataFrame` (or a NetworkXFigure object around a `Graph`)
 2. add `geom`s to the figure object to plot specific combinations of columns of the data frame.
 3. show the figure, which serves up the figure in a browser window
 4. muck about with the style of the plot using the browser's developer tools
@@ -40,3 +40,21 @@ An example session could like:
 	fig += d3py.geoms.Point(x="pressure", y="temp", fill="red")
 	# writes 3 files, starts up a server, then draws some beautiful points in Chrome
 	fig.show() 
+
+Check out the examples in the folder for more functionality! Assuming everything is working OK, the examples should generate (something akin to) the following plots:
+
+# point
+
+![point example](http://mikedewar.org/scatter.png)
+
+# line
+
+![line example](http://mikedewar.org/line.png)
+
+# bar
+
+![bar example](http://mikedewar.org/bar.png)
+
+# area
+
+![area example](http://mikedewar.org/area.png)
