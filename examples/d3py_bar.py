@@ -18,10 +18,10 @@ with d3py.PandasFigure(df) as p:
     p += d3py.xAxis(x = "apple_type")
     p.show()
 
-# if you are writing in a terminal, use without 'with' to keep everything nice 
+# if you are writing in a terminal, use without 'with' to keep everything nice
 # and interactive
 """
-p = d3py.Figure(df)
+p = d3py.PandasFigure(df)
 p += d3py.Bar(x = "apple_type", y = "count", fill = "MediumAquamarine")
 p += d3py.xAxis(x = "apple_type")
 p.show()
