@@ -1,8 +1,8 @@
 <head>
     <meta http-equiv="content-type" content="text/html;charset=utf-8;no-cache">
-    <script type="text/javascript" charset="utf-8" src="http://localhost:{{ port }}/static/d3.js"></script>
-    <script type="text/javascript" charset="utf-8" src="http://localhost:{{ port }}/{{ name }}.js"></script>
-    <link type="text/css" rel="stylesheet" href="http://localhost:{{ port }}/{{ name }}.css">
+    <script type="text/javascript" charset="utf-8" src="http://{{ host }}:{{ port }}/static/d3.js"></script>
+    <script type="text/javascript" charset="utf-8" src="http://{{ host }}:{{ port }}/{{ name }}.js"></script>
+    <link type="text/css" rel="stylesheet" href="http://{{ host }}:{{ port }}/{{ name }}.css">
     <link href='http://fonts.googleapis.com/css?family={{ font }}' rel='stylesheet' type='text/css'>
     
     <title>d3py: {{ name }}</title>
@@ -11,7 +11,7 @@
 <body>
     <div id="chart"></div>
     <script>
-        d3.json("http://localhost:{{ port }}/{{ name }}.json", draw);
+        d3.json("http://{{ host }}:{{ port }}/{{ name }}.json", draw);
     </script>
 </body>
 
