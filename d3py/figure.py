@@ -1,6 +1,7 @@
 import logging
 import webbrowser
 from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
+import IPython.core.display
 import threading
 from cStringIO import StringIO
 import time
@@ -216,7 +217,11 @@ class Figure(object):
             # if not blocking, we serve the 
             self._serve(blocking=False)
             # fire up a browser
-            webbrowser.open_new_tab("http://%s:%s/%s.html"%(self.host,self.port, self.name))
+            webbrowser.open_new_tab("http://%s:%s/%s.html"%(self.host,self.port, self.name)
+
+    def display(self, width=700, height=400):
+        html = "<iframe src=http://%s:%s/%s.html width=%s height=%s>" %(self.host, self.port, self.name, width, height)
+        IPython.core.display.HTML(html)
 
     def _serve(self, blocking=True):
         """
