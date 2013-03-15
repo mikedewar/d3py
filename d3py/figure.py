@@ -197,7 +197,7 @@ class Figure(object):
     def _save_html(self):
         # update the html with the correct port number
         self.html = self.html.replace("{{ port }}", str(self.port))
-	self.html = self.html.replace("{{ host }}", str(self.host))
+        self.html = self.html.replace("{{ host }}", str(self.host))
         # write html
         filename = "%s.html"%self.name
         self.filemap[filename] = {"fd":StringIO(self.html),
