@@ -1,6 +1,7 @@
 import logging
 import webbrowser
 from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
+import IPython.core.display
 import threading
 from cStringIO import StringIO
 import time
@@ -11,7 +12,7 @@ from css import CSS
 import javascript as JS
 
 class Figure(object):
-    def __init__(self, name, width, height, interactive, font, logging,  template, port, **kwargs):
+    def __init__(self, name, width, height, interactive, font, logging,  template, host, port, **kwargs):
 
         # store data
         self.name = '_'.join(name.split())
@@ -24,6 +25,7 @@ class Figure(object):
         }
 
         # Networking stuff
+        self.host = host
         self.port = port
         self._server_thread = None
         self.httpd = None
@@ -195,6 +197,7 @@ class Figure(object):
     def _save_html(self):
         # update the html with the correct port number
         self.html = self.html.replace("{{ port }}", str(self.port))
+        self.html = self.html.replace("{{ host }}", str(self.host))
         # write html
         filename = "%s.html"%self.name
         self.filemap[filename] = {"fd":StringIO(self.html),
@@ -214,14 +217,18 @@ class Figure(object):
             # if not blocking, we serve the 
             self._serve(blocking=False)
             # fire up a browser
-            webbrowser.open_new_tab("http://localhost:%s/%s.html"%(self.port, self.name))
+            webbrowser.open_new_tab("http://%s:%s/%s.html"%(self.host,self.port, self.name))
+
+    def display(self, width=700, height=400):
+        html = "<iframe src=http://%s:%s/%s.html width=%s height=%s>" %(self.host, self.port, self.name, width, height)
+        IPython.core.display.HTML(html)
 
     def _serve(self, blocking=True):
         """
         start up a server to serve the files for this vis.
         """
-        msgparams = (self.port, self.name)
-        url = "http://localhost:%s/%s.html"%msgparams
+        msgparams = (self.host, self.port, self.name)
+        url = "http://%s:%s/%s.html"%msgparams
         if self._server_thread is None or self._server_thread.active_count() == 0:
             Handler = CustomHTTPRequestHandler
             Handler.filemap = self.filemap
@@ -232,14 +239,14 @@ class Figure(object):
                 print "Exception %s"%e
                 return False
             if blocking:
-                logging.info('serving forever on port: %s'%msgparams[0])
+                logging.info('serving forever on port: %s'%msgparams[1])
                 msg = "You can find your chart at " + url
                 print msg
                 print "Ctrl-C to stop serving the chart and quit!"
                 self._server_thread = None
                 self.httpd.serve_forever()
             else:
-                logging.info('serving asynchronously on port %s'%msgparams[0])
+                logging.info('serving asynchronously on port %s'%msgparams[1])
                 self._server_thread = threading.Thread(
                     target=self.httpd.serve_forever
                 )
