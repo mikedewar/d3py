@@ -12,7 +12,31 @@ from css import CSS
 import javascript as JS
 
 class Figure(object):
-    def __init__(self, name, width, height, interactive, font, logging,  template, host, port, **kwargs):
+    '''Abstract Base Class for all figures'''
+    
+    def __init__(self, name, width, height, interactive, font, logging, 
+                 template, host, port, **kwargs):
+        '''
+        Figure is the base class for both Pandas and NetworkX figures. 
+        
+        Parameters:
+        -----------
+        name: string
+            Name of visualization; will appear in title bar of the webpage, 
+            and in the folder where files are stored. 
+        width : int 
+            Width of the figure in pixels
+        height : int 
+            Height of the figure in pixels
+        interactive : boolean
+            Set to false if you are drawing the graph using a script and
+            not in the command line
+        font : string
+            Name of the font you'd like to use. See     
+            http://www.google.com/webfonts for options
+            
+        
+        '''
 
         # store data
         self.name = '_'.join(name.split())
