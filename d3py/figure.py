@@ -1,3 +1,12 @@
+  # -*- coding: utf-8 -*-
+'''
+Figure
+-------
+
+Abstract Base Class for all figures. Currently subclassed by pandas_figure, 
+can be subclassed for other figure types. 
+
+'''
 import logging
 import webbrowser
 from HTTPHandler import CustomHTTPRequestHandler, ThreadedHTTPServer
@@ -17,7 +26,8 @@ class Figure(object):
     def __init__(self, name, width, height, interactive, font, logging, 
                  template, host, port, **kwargs):
         '''
-        Figure is the base class for both Pandas and NetworkX figures. 
+        Figure is the abstract base class for all figures. Currently 
+        subclassed by pandas_figure and networkx_figure. 
         
         Parameters:
         -----------
@@ -30,64 +40,64 @@ class Figure(object):
             Height of the figure in pixels
         interactive : boolean
             Set to false if you are drawing the graph using a script and
-            not in the command line
+            not in the command line. 
         font : string
             Name of the font you'd like to use. See     
             http://www.google.com/webfonts for options
-            
+        logging: 
+            Logging via the sandard Python loggin library
+        template: string
+            HTML template for figure. Defaults to /d3py_template (Also, when 
+            building your own HTML, please see the default template for 
+            correct usage of {{ name }}, {{ host }}, {{ port }}, and 
+            {{ font }}
+        host: string
+            Generally default to 'localhost' for local plotting
+        port: int
+            Generally defaults to 8000 for local plotting
         
         '''
 
         # store data
         self.name = '_'.join(name.split())
         d3py_path = os.path.abspath(os.path.dirname(__file__))
-        self.filemap = {
-            "static/d3.js":{
-                "fd":open(d3py_path+"/d3.js","r"), 
-                "timestamp":time.time()
-            },
-        }
-
+        self.filemap = {"static/d3.js":{"fd":open(d3py_path+"/d3.js","r"), 
+                                        "timestamp":time.time()},}
+                                        
         # Networking stuff
         self.host = host
         self.port = port
         self._server_thread = None
         self.httpd = None
 
-        # interactive is True by default as this is designed to be a command line tool
-        # we do not want to block interaction after plotting.
+        '''Interactive is true by default, as this is designed to be a command
+        line tool. We do not want to block interaction after plotting.'''
         self.interactive = interactive
         self.logging = logging
 
         # initialise strings
         self.js = JS.JavaScript()
-        self.margins = {
-            "top": 10, 
-            "right": 20, 
-            "bottom": 25, 
-            "left": 60, 
-            "height":height, 
-            "width":width
-        }
+        self.margins = {"top": 10, "right": 20, "bottom": 25, "left": 60, 
+                        "height":height, "width":width}
         
         # we use bostock's scheme http://bl.ocks.org/1624660
         self.css = CSS()
         self.html = ""
-        self.template = template or "".join(open(d3py_path+'/d3py_template.html').readlines())
+        self.template = template or "".join(open(d3py_path + '/d3py_template.html').readlines())
         self.js_geoms = JS.JavaScript()
         self.css_geoms = CSS()
         self.geoms = []
         # misc arguments - these go into the css!
         self.font = font
-        self.args = {
-            "width": width - self.margins["left"] - self.margins["right"],
-            "height": height - self.margins["top"] - self.margins["bottom"],
-            "font-family": "'%s'; sans-serif"%self.font
-        }
+        self.args = {"width": width - self.margins["left"] - self.margins["right"],
+                     "height": height - self.margins["top"] - self.margins["bottom"],
+                     "font-family": "'%s'; sans-serif"%self.font}
+        
         kwargs = dict([(k[0].replace('_','-'), k[1]) for k in kwargs.items()])
         self.args.update(kwargs)
 
     def _build(self):
+        '''Build all JS, CSS, HTML, and Geometries'''
         logging.debug('building chart')
         self._build_js()
         self._build_css()
@@ -95,18 +105,20 @@ class Figure(object):
         self._build_geoms()
 
     def update(self):
+        '''Rebuild JS, CSS, & HTML, and save all data'''
         logging.debug('updating chart')
         self._build()
         self.save()
 
     def save(self):
+        '''Save data, JS, CSS, and HTML'''
         logging.debug('saving chart')
         self._save_data()
         self._save_css()
         self._save_js()
         self._save_html()
 
-    def _clanup(self):
+    def _cleanup(self):
         raise NotImplementedError
 
 
@@ -135,26 +147,30 @@ class Figure(object):
         self.interactive = False
 
     def _set_data(self):
+        '''Update JS, CSS, HTML, save all'''
         self.update()
 
     def _add_geom(self, geom):
+        '''Append D3py.geom to Figure instance'''
         self.geoms.append(geom)
         self.save()
     
     def _build_css(self):
-        #._build up the basic css
+        '''Build basic CSS'''
         chart = {}
         chart.update(self.args)
         self.css["#chart"] = chart
 
     def _build_html(self):
-        # we start the html using a template - it's pretty simple
+        '''Build HTML, either via 'template' argument or default template 
+        at /d3py_template.html.'''
         self.html = self.template
         self.html = self.html.replace("{{ name }}", self.name)
         self.html = self.html.replace("{{ font }}", self.font)
         self._save_html()
 
     def _build_geoms(self):
+        '''Build D3py CSS/JS geometries. See /geoms for more details'''
         self.js_geoms = JS.JavaScript()
         self.css_geoms = CSS()
         for geom in self.geoms:
@@ -172,6 +188,7 @@ class Figure(object):
         raise NotImplementedError
         
     def _build_js(self):
+        '''Build Javascript for Figure'''
         draw = JS.Function("draw", ("data",))
         draw += "var margin = %s;"%json.dumps(self.margins).replace('""','')
         draw += "    width = %s - margin.left - margin.right"%self.margins["width"]
@@ -188,12 +205,12 @@ class Figure(object):
 
     def _save_data(self,directory=None):
         """
-        save a json representation of the figure's data frame
+        Save a json representation of the figure's data frame
         
-        Parameters
-        ==========
+        Parameters:
+        -----------
         directory : str
-            specify a directory to store the data in (optional)
+            Specify a directory to store the data in (optional)
         """
         # write data
         filename = "%s.json"%self.name
@@ -201,14 +218,14 @@ class Figure(object):
                 "timestamp":time.time()}
 
     def _save_css(self):
-        # write css
+        '''Save CSS data. Will save Figure name to 'name.css' '''
         filename = "%s.css"%self.name
         css = "%s\n%s"%(self.css, self.css_geoms)
         self.filemap[filename] = {"fd":StringIO(css),
                 "timestamp":time.time()}
 
     def _save_js(self):
-        # write javascript
+        '''Save JS data. Will save Figure name to 'name.js' '''
         final_js = JS.JavaScript()
         final_js.merge(self.js)
         final_js.merge(self.js_geoms)
@@ -219,7 +236,9 @@ class Figure(object):
                 "timestamp":time.time()}
 
     def _save_html(self):
-        # update the html with the correct port number
+        '''Save HTML data. Will save Figure name to 'name.html'. Will also
+        replace {{ port }} and {{ host }} fields in template with
+        Figure.port and Figure.host '''
         self.html = self.html.replace("{{ port }}", str(self.port))
         self.html = self.html.replace("{{ host }}", str(self.host))
         # write html
