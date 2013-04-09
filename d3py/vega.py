@@ -68,8 +68,8 @@ class Vega(object):
         '''
         Update of data component. 
         
-        Example: 
-        >>>object.update_data(name='table', 
+        '''
+        pass
                            
     def to_json(self, path):
         '''
