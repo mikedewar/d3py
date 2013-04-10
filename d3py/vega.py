@@ -6,6 +6,8 @@ A Python to Vega translator.
 
 '''
 
+import json
+import pandas as pd
 
 class Vega(object): 
     '''Vega abstract base class'''
@@ -30,7 +32,7 @@ class Vega(object):
             Width of the visualization
         height: int, default 400
             Height of the visualization
-        padding: dict, default {'T': 10, 'L': 30, 'B': 20, 'R': 10}
+        padding: dict, default {'top': 10, 'left': 30, 'bottom': 20, 'right': 10}
             Internal margins for the visualization, Top, Left, Bottom, Right
         viewport: list, default []
             Width and height of on-screen viewport
@@ -48,28 +50,60 @@ class Vega(object):
         self.scales = []
         self.axes = []
         self.marks = []
-        self.vega = {'name': name, 'width': width, 'height': height,
-                     'padding': padding, 'viewport': viewport, 
-                     'data': self.data, 'scales': self.scales, 
-                     'axes':self.axes, 'marks': self.marks}
-                     
+        self._build_vega()
+    
+    def _build_vega(self, *args):
+        '''Build complete vega specification. String arguments passed will not
+        be included in vega dict. 
         
-    def update_vega(self, **kwargs):
+        Ex: object._build_vega('viewport')
         '''
-        Complete update of Vega object. Replaces all values for top level key.
         
-        Examples: 
-        >>>object.update_vega(width=500)
+        keys = ['name', 'width', 'height', 'padding', 'viewport', 'data', 
+                'scales', 'axes', 'marks']
+        self.vega = {}
+        for key in keys: 
+            if key not in args: 
+                self.vega[key] = getattr(self, key)
+                
+    def update_viz(self, **kwargs):
+        '''
+        Update Vega top level Visualization property:
+        width, height, padding, viewport
+        
+        Ex: >>>my_vega.build_viz(height=800, width=800)
+        '''
+        
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
+            
+        self._build_vega()
+        
+        
+    def build_property(self, **kwargs):
+        '''Build top-level Vega property. The Vega grammar will update with
+        passed keywords.
+        
+        Examples:
+        >>>my_vega.build_property(scales = {"name":"x", "type":"ordinal", 
+                                            "range":"width"})
+        >>>my_vega.build_property(width=400, height=800)                                            
         '''
 
-        self.vega.update(kwargs)
+        for key, value in kwargs.iteritems(): 
+            getattr(self, key).append(value)
         
-    def update_data(self, **kwargs, append=False):
-        '''
-        Update of data component. 
+        self._build_vega()
         
-        '''
+    def update_property(self, property=None, index=None, **kwargs):
+        '''Update individual parameters of any property.''' 
+        
         pass
+        
+        for key, value in kwargs.iteritems():
+            getattr(self, property)[index].update({key: value})
+        
+        self._build_vega()
                            
     def to_json(self, path):
         '''
@@ -81,7 +115,81 @@ class Vega(object):
             Save path
         '''
         
-        pass
+        with open(path, 'w') as f: 
+            json.dump(self.vega, f, sort_keys=True, indent=0,
+                      separators=(',', ': '))
+                      
+    def tabular_data(self, data, name="table", columns=None, use_index=False):
+        '''Create the data for a bar chart in Vega grammer. Data can be passed
+        in a list, dict, or Pandas Dataframe. 
+        
+        Parameters:
+        -----------
+        name: string, default "VegaBar"
+            If passed as a list or dict, the name will default to the name 
+            passed name parameter. If a DataFrame, the name parameter will use
+            the DataFrame name if provided
+        columns: list, default None
+            If passing Pandas DataFrame, you must pass at least one colum name. 
+            If one column is passed, x-values will default to the index values.
+            If two column names are passed, x-values are columns[0], y-values 
+            columns[1]./
+        
+            
+        Examples: 
+        ---------
+        >>>myvega.tabular_data([10, 20, 30, 40, 50])
+        >>>myvega.tabular_data({'A': 10, 'B': 20, 'C': 30, 'D': 40, 'E': 50}
+        >>>myvega.tabular_data(my_dataframe, columns=['column 1'], use_index=True)
+        >>>myvega.tabular_data(my_dataframe, columns=['column 1', 'column 2'])
+        '''
+        
+        if isinstance(data, list):
+            default_range = xrange(1, len(data)+1, 1)
+            values = [{"x": x, "y": y} for x, y in zip(default_range, data)]
+            
+        if isinstance(data, dict):
+            values = [{"x": x, "y": y} for x, y in data.iteritems()]
+            
+        if isinstance(data, pd.DataFrame):
+            if len(columns) > 1 and use_index: 
+                raise ValueError('If using index as x-axis, len(columns)'
+                                 'cannot be > 1')
+            if use_index or len(columns) == 1: 
+                values = [{"x": x[0], "y": x[1][columns[0]]} 
+                           for x in data.iterrows()]
+            
+            values = [{"x": x[1][columns[0]], "y": x[1][columns[1]]} 
+                      for x in data.iterrows()]
+             
+        self.data.append({"name": name, "values": values})
+        self._build_vega()                 
+                      
+class Bar(Vega):
+    '''Create a bar chart in Vega grammar'''
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
         
            
            
