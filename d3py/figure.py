@@ -16,9 +16,11 @@ from cStringIO import StringIO
 import time
 import json
 import os
+from pkg_resources import resource_string
 
 from css import CSS
 import javascript as JS
+import vega
 
 class Figure(object):
     '''Abstract Base Class for all figures'''
@@ -63,7 +65,7 @@ class Figure(object):
         d3py_path = os.path.abspath(os.path.dirname(__file__))
         self.filemap = {"static/d3.js":{"fd":open(d3py_path+"/d3.js","r"), 
                                         "timestamp":time.time()},}
-                                        
+                                                                               
         # Networking stuff
         self.host = host
         self.port = port
@@ -83,7 +85,7 @@ class Figure(object):
         # we use bostock's scheme http://bl.ocks.org/1624660
         self.css = CSS()
         self.html = ""
-        self.template = template or "".join(open(d3py_path + '/d3py_template.html').readlines())
+        self.template = template or resource_string('d3py', 'd3py_template.html')
         self.js_geoms = JS.JavaScript()
         self.css_geoms = CSS()
         self.geoms = []
@@ -95,7 +97,13 @@ class Figure(object):
         
         kwargs = dict([(k[0].replace('_','-'), k[1]) for k in kwargs.items()])
         self.args.update(kwargs)
-
+        
+    def update(self):
+        '''Build or update JS, CSS, & HTML, and save all data'''
+        logging.debug('updating chart')
+        self._build()
+        self.save()
+        
     def _build(self):
         '''Build all JS, CSS, HTML, and Geometries'''
         logging.debug('building chart')
@@ -104,20 +112,44 @@ class Figure(object):
         self._build_html()
         self._build_geoms()
 
-    def update(self):
-        '''Rebuild JS, CSS, & HTML, and save all data'''
-        logging.debug('updating chart')
-        self._build()
-        self.save()
+    def _build_css(self):
+        '''Build basic CSS'''
+        chart = {}
+        chart.update(self.args)
+        self.css["#chart"] = chart
 
-    def save(self):
-        '''Save data, JS, CSS, and HTML'''
-        logging.debug('saving chart')
-        self._save_data()
-        self._save_css()
-        self._save_js()
+    def _build_html(self):
+        '''Build HTML, either via 'template' argument or default template 
+        at /d3py_template.html.'''
+        self.html = self.template
+        self.html = self.html.replace("{{ name }}", self.name)
+        self.html = self.html.replace("{{ font }}", self.font)
         self._save_html()
 
+    def _build_geoms(self):
+        '''Build D3py CSS/JS geometries. See /geoms for more details'''
+        self.js_geoms = JS.JavaScript()
+        self.css_geoms = CSS()
+        for geom in self.geoms:
+            self.js_geoms.merge(geom._build_js())
+            self.css_geoms += geom._build_css()
+        
+    def _build_js(self):
+        '''Build Javascript for Figure'''
+        draw = JS.Function("draw", ("data",))
+        draw += "var margin = %s;"%json.dumps(self.margins).replace('""','')
+        draw += "    width = %s - margin.left - margin.right"%self.margins["width"]
+        draw += "    height = %s - margin.top - margin.bottom;"%self.margins["height"]
+        # this approach to laying out the graph is from Bostock: http://bl.ocks.org/1624660
+        draw += "var g = " + JS.Selection("d3").select("'#chart'") \
+            .append("'svg'") \
+            .attr("'width'", 'width + margin.left + margin.right + 25') \
+            .attr("'height'", 'height + margin.top + margin.bottom + 25') \
+            .append("'g'") \
+            .attr("'transform'", "'translate(' + margin.left + ',' + margin.top + ')'")
+
+        self.js = JS.JavaScript() + draw + JS.Function("init")
+        
     def _cleanup(self):
         raise NotImplementedError
 
@@ -149,63 +181,47 @@ class Figure(object):
     def _set_data(self):
         '''Update JS, CSS, HTML, save all'''
         self.update()
+        
+    def __add__(self, geom):
+        '''Add d3py.geom object to the Figure'''
+        self._add_geom(geom)
 
+    def __iadd__(self, figure):
+        '''Add d3py.geom or d3py.vega object to the Figure'''
+        if isinstance(figure, vega.Vega):
+            self._add_vega(figure)
+        else: 
+            self._add_geom(figure)
+        return self
+        
+    def _add_vega(self, figure):
+        '''Add D3py.Vega Figure'''
+        self.vega = figure
+        self.vega.tabular_data(self.data, columns=self.columns,
+                               use_index=self.use_index)
+        self.template = resource_string('d3py', 'vega_template.html')
+        vega, data = self.vega._json_IO(self.host, self.port)
+        self.filemap['vega.json'] = {"fd":StringIO(vega),
+                                       "timestamp":time.time()}
+        self.filemap['data.json'] = {"fd":StringIO(data),
+                                          "timestamp":time.time()}                                  
+        
     def _add_geom(self, geom):
-        '''Append D3py.geom to Figure instance'''
+        '''Append D3py.geom to existing D3py geoms'''
         self.geoms.append(geom)
         self.save()
-    
-    def _build_css(self):
-        '''Build basic CSS'''
-        chart = {}
-        chart.update(self.args)
-        self.css["#chart"] = chart
-
-    def _build_html(self):
-        '''Build HTML, either via 'template' argument or default template 
-        at /d3py_template.html.'''
-        self.html = self.template
-        self.html = self.html.replace("{{ name }}", self.name)
-        self.html = self.html.replace("{{ font }}", self.font)
-        self._save_html()
-
-    def _build_geoms(self):
-        '''Build D3py CSS/JS geometries. See /geoms for more details'''
-        self.js_geoms = JS.JavaScript()
-        self.css_geoms = CSS()
-        for geom in self.geoms:
-            self.js_geoms.merge(geom._build_js())
-            self.css_geoms += geom._build_css()
-
-    def __add__(self, geom):
-        self._add_geom(geom)
-
-    def __iadd__(self, geom):
-        self._add_geom(geom)
-        return self
-
-    def _data_to_json(self):
-        raise NotImplementedError
         
-    def _build_js(self):
-        '''Build Javascript for Figure'''
-        draw = JS.Function("draw", ("data",))
-        draw += "var margin = %s;"%json.dumps(self.margins).replace('""','')
-        draw += "    width = %s - margin.left - margin.right"%self.margins["width"]
-        draw += "    height = %s - margin.top - margin.bottom;"%self.margins["height"]
-        # this approach to laying out the graph is from Bostock: http://bl.ocks.org/1624660
-        draw += "var g = " + JS.Selection("d3").select("'#chart'") \
-            .append("'svg'") \
-            .attr("'width'", 'width + margin.left + margin.right + 25') \
-            .attr("'height'", 'height + margin.top + margin.bottom + 25') \
-            .append("'g'") \
-            .attr("'transform'", "'translate(' + margin.left + ',' + margin.top + ')'")
-
-        self.js = JS.JavaScript() + draw + JS.Function("init")
-
+    def save(self):
+        '''Save data and all Figure components: JS, CSS, and HTML'''
+        logging.debug('saving chart')
+        self._save_data()
+        self._save_css()
+        self._save_js()
+        self._save_html()
+        
     def _save_data(self,directory=None):
         """
-        Save a json representation of the figure's data frame
+        Build file map (dir path and StringIO for output) of data
         
         Parameters:
         -----------
@@ -215,17 +231,17 @@ class Figure(object):
         # write data
         filename = "%s.json"%self.name
         self.filemap[filename] = {"fd":StringIO(self._data_to_json()),
-                "timestamp":time.time()}
+                                  "timestamp":time.time()}
 
     def _save_css(self):
-        '''Save CSS data. Will save Figure name to 'name.css' '''
+        '''Build file map (dir path and StringIO for output) of CSS'''
         filename = "%s.css"%self.name
         css = "%s\n%s"%(self.css, self.css_geoms)
         self.filemap[filename] = {"fd":StringIO(css),
-                "timestamp":time.time()}
+                                  "timestamp":time.time()}
 
     def _save_js(self):
-        '''Save JS data. Will save Figure name to 'name.js' '''
+        '''Build file map (dir path and StringIO for output) of data'''
         final_js = JS.JavaScript()
         final_js.merge(self.js)
         final_js.merge(self.js_geoms)
@@ -245,6 +261,9 @@ class Figure(object):
         filename = "%s.html"%self.name
         self.filemap[filename] = {"fd":StringIO(self.html),
                 "timestamp":time.time()}
+                
+    def _data_to_json(self):
+        raise NotImplementedError
 
     def show(self, interactive=None):
         self.update()
