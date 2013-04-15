@@ -1,9 +1,9 @@
 '''
-Vincent
+Vega/Vincent
 -------
 
-A Python to Vega translator. Python data structures go in, Vega grammar
-comes out. 
+The d3py port of the Vincent project: 
+https://github.com/wrobstory/vincent
 
 '''
 
@@ -242,7 +242,7 @@ class Vega(object):
         use_index: boolean, default False
             Use the DataFrame index for your x-values
         append: boolean, default False
-            Append new data to data already in vincent object
+            Append new data to data already in object
 
         Examples:
         ---------
