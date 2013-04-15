@@ -107,6 +107,8 @@ class Figure(object):
     def _build(self):
         '''Build all JS, CSS, HTML, and Geometries'''
         logging.debug('building chart')
+        if hasattr(self, 'vega'):
+            self.vega.build_vega()
         self._build_js()
         self._build_css()
         self._build_html()
@@ -184,7 +186,10 @@ class Figure(object):
         
     def __add__(self, geom):
         '''Add d3py.geom object to the Figure'''
-        self._add_geom(geom)
+        if isinstance(figure, vega.Vega):
+            self._add_vega(figure)
+        else: 
+            self._add_geom(figure)
 
     def __iadd__(self, figure):
         '''Add d3py.geom or d3py.vega object to the Figure'''
@@ -200,11 +205,7 @@ class Figure(object):
         self.vega.tabular_data(self.data, columns=self.columns,
                                use_index=self.use_index)
         self.template = resource_string('d3py', 'vega_template.html')
-        vega, data = self.vega._json_IO(self.host, self.port)
-        self.filemap['vega.json'] = {"fd":StringIO(vega),
-                                       "timestamp":time.time()}
-        self.filemap['data.json'] = {"fd":StringIO(data),
-                                          "timestamp":time.time()}                                  
+        self._save_vega()                                 
         
     def _add_geom(self, geom):
         '''Append D3py.geom to existing D3py geoms'''
@@ -214,6 +215,8 @@ class Figure(object):
     def save(self):
         '''Save data and all Figure components: JS, CSS, and HTML'''
         logging.debug('saving chart')
+        if hasattr(self, 'vega'):
+            self._save_vega()
         self._save_data()
         self._save_css()
         self._save_js()
@@ -232,6 +235,12 @@ class Figure(object):
         filename = "%s.json"%self.name
         self.filemap[filename] = {"fd":StringIO(self._data_to_json()),
                                   "timestamp":time.time()}
+                                  
+    def _save_vega(self):
+        '''Build file map (dir path and StringIO for output) of Vega'''
+        vega = json.dumps(self.vega.vega, sort_keys=True, indent=4)
+        self.filemap['vega.json'] = {"fd":StringIO(vega),
+                                     "timestamp":time.time()}
 
     def _save_css(self):
         '''Build file map (dir path and StringIO for output) of CSS'''
