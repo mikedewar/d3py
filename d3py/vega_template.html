@@ -1,0 +1,23 @@
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8;no-cache">
+    <script src="http://trifacta.github.com/vega/d3.v3.min.js"></script>
+    <script src="http://trifacta.github.com/vega/vega.js"></script>
+    
+    <title>d3py: {{ name }}</title>
+    
+</head>
+
+  <body>
+    <div id="vis"></div>
+  </body>
+  
+<script type="text/javascript">
+// Parse Vega visualization
+function parse(spec) {
+  vg.parse.spec(spec, function(chart) { chart({el:"#vis"}).update(); });
+}
+parse("http://{{ host }}:{{ port }}/vega.json");
+</script>
+
+</html>
+

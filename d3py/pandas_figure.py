@@ -7,8 +7,8 @@ from figure import Figure
 
 class PandasFigure(Figure):
     def __init__(self, data, name="figure", width=800, height=400, 
-        interactive=True, font="Asap", logging=False,  template=None,
-        host="localhost", port=8000, **kwargs):
+        columns = None, use_index=False, interactive=True, font="Asap", 
+        logging=False,  template=None, host="localhost", port=8000, **kwargs):
         """
         data : dataFrame
             pandas dataFrame used for the plot. This dataFrame is column centric
@@ -20,6 +20,11 @@ class PandasFigure(Figure):
             width of the figure in pixels (default is 1024)
         height : int 
             height of the figure in pixels (default is 768)
+        columns: dict, default None
+            DataFrame columns you want to visualize for Vega 
+        use_index: boolean, default False
+            If true, D3py.Vega uses the index for the x-axis instead of a second
+            column
         interactive : boolean
             set this to false if you are drawing the graph using a script and
             not in the command line (default is True)
@@ -31,12 +36,14 @@ class PandasFigure(Figure):
         in arbitrary css to the figure    
         
         """
-        super(PandasFigure, self).__init__(
-            name=name, width=width, height=height, 
-            interactive=interactive, font=font, logging=logging,  template=template,
-            host=host, port=port, **kwargs
-        )
+        super(PandasFigure, self).__init__(name=name, width=width, height=height, 
+                                           interactive=interactive, font=font, 
+                                           logging=logging,  template=template,
+                                           host=host, port=port, **kwargs)
+    
         # store data
+        self.columns = columns
+        self.use_index = use_index
         self.data = data
         self._save_data()
 
