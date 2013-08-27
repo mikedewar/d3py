@@ -1,3 +1,14 @@
+Hello
+=====
+
+August 2013
+
+Hello! Maybe you're looking for a nice Python interface to build interactive, javascript based plots that look as nice as all those d3 plots you've been seeing lately? Well, this repository is not a bad place to start looking. The code herein was an experiment to see if this approach was a good idea and, if it was, what the experience of plotting into the browser from Python would feel like. 
+
+All the code should work, more or less, and you are welcome to fork it, muck about with it, and generally get a taste for what this sort of plotting feels like. 
+
+You probably don't want to stop reading here, though. Instead, you should go check out [vincent](https://github.com/wrobstory/vincent) which is a much nicer take on this idea, created using [vega](https://github.com/trifacta/vega), and is in general a much more gentlemanly way to go about this sort of thing. It's also being properly updated and developed, unlike the code below. 
+
 d3py
 ====
 
