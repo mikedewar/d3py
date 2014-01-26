@@ -8,7 +8,7 @@ from figure import Figure
 class NetworkXFigure(Figure):
     def __init__(self, graph, name="figure", width=400, height=100, 
         interactive=True, font="Asap", logging=False,  template=None,
-        port=8000, **kwargs):
+        host="localhost", port=8000, **kwargs):
         """
         data : networkx gprah
             networkx graph used for the plot.
@@ -36,7 +36,7 @@ class NetworkXFigure(Figure):
         super(NetworkXFigure, self).__init__(
             name=name, width=width, height=height, 
             interactive=interactive, font=font, logging=logging,  template=template,
-            port=port, **kwargs
+            host=host, port=port, **kwargs
         )
         # store data
         self.G = graph
