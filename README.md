@@ -22,6 +22,7 @@ The idioms used to plot data are very simple, and borrow from R's [ggplot2](http
 1. `easy_install https://github.com/mikedewar/d3py/tarball/master`
 2. `pip install pandas`
 3. `pip install numpy`
+4. `pip install networkx`
 
 #### Example:
 
